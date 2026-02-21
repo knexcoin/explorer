@@ -45,7 +45,9 @@ const KnexVisualizer = {
         if (dagTab) {
             dagTab.addEventListener('click', () => {
                 if (!this.initialized) {
-                    setTimeout(() => this.setup(), 50);
+                    setTimeout(() => {
+                        requestAnimationFrame(() => this.setup());
+                    }, 150);
                 }
             });
         }
@@ -119,6 +121,11 @@ const KnexVisualizer = {
             this.initialized = true;
             this.startLayout();
             this.updateNodeCount();
+
+            // Seed with recent blocks from API if DAG is empty
+            if (this.graph.order === 0) {
+                this.seedFromAPI();
+            }
 
             console.log('[DAG] Visualizer initialized with', this.graph.order, 'nodes');
         } catch (e) {
@@ -205,6 +212,23 @@ const KnexVisualizer = {
 
         // Quick layout pass
         this.applyLayoutStep(3);
+    },
+
+    async seedFromAPI() {
+        try {
+            const res = await fetch(`${Explorer.config.apiUrl}/api/v1/blocks/recent`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const blocks = Array.isArray(data) ? data : (data.blocks || []);
+            // Add blocks in chronological order (reverse since API returns newest first)
+            for (const block of blocks.reverse()) {
+                this.addBlock(block);
+            }
+            this.updateNodeCount();
+            console.log('[DAG] Seeded from API with', this.graph.order, 'nodes');
+        } catch (e) {
+            console.warn('[DAG] Failed to seed from API:', e);
+        }
     },
 
     trimOldest() {

@@ -1232,8 +1232,8 @@ const Explorer = {
     // =============================================
     showPanel(panelId) {
         // Clean up DAG visualizer when switching away from it
-        if (typeof KnexDAG !== 'undefined' && panelId !== 'dagPanel' && KnexDAG.initialized) {
-            KnexDAG.destroy();
+        if (typeof KnexVisualizer !== 'undefined' && panelId !== 'dagPanel' && KnexVisualizer.initialized) {
+            KnexVisualizer.destroy();
         }
 
         const panels = ['liveFeedPanel', 'dagPanel', 'statsPanel', 'accountPanel', 'blockPanel', 'richListPanel', 'blocksPanel'];
