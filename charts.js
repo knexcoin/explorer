@@ -976,7 +976,7 @@ const KnexCore = {
         bar.innerHTML = `
             <div class="core-pob-item">
                 <span class="core-pob-label">Protocol</span>
-                <span class="core-pob-value">Proof of Balance (PoB)</span>
+                <span class="core-pob-value">Proof of Bandwidth (PoB)</span>
             </div>
             <div class="core-pob-item">
                 <span class="core-pob-label">Validators</span>
