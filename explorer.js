@@ -943,7 +943,8 @@ const Explorer = {
                 return;
             }
             const data = await res.json();
-            this.renderRichList(data);
+            const accounts = Array.isArray(data) ? data : (data.richlist || data.accounts || []);
+            this.renderRichList(accounts);
         } catch (error) {
             container.innerHTML = `<div class="feed-empty"><p style="color:var(--red)">Failed to load rich list</p><p class="feed-empty-sub">${this.escapeHtml(error.message)}</p></div>`;
         }
@@ -1022,7 +1023,8 @@ const Explorer = {
                 return;
             }
             const data = await res.json();
-            this.renderBlockList(data);
+            const blocks = Array.isArray(data) ? data : (data.blocks || []);
+            this.renderBlockList(blocks);
         } catch (error) {
             // Fallback to feed items
             if (this.state.feedItems.length > 0) {
