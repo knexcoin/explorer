@@ -38,7 +38,8 @@ const KnexVisualizer = {
     globeCanvas: null,
     globeCtx: null,
     globeRotation: 0,  // auto-rotation angle in radians
-    globeNodeData: new Map(), // node → { color, size } for globe overlay
+    globeNodeData: new Map(), // node → { color, size, label, blockType } for globe overlay
+    edgePulses: [],            // [{ src, tgt, startTime, duration }] for neon pulse animation
 
     // Block data storage for time slider / search / path finding
     blockData: new Map(),   // hash → full block data
@@ -269,7 +270,7 @@ const KnexVisualizer = {
             // Globe overlay canvas — wireframe sphere nodes
             this.globeCanvas = document.createElement('canvas');
             this.globeCanvas.className = 'dag-globe-overlay';
-            this.globeCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;';
+            this.globeCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15;';
             container.appendChild(this.globeCanvas);
             this.globeCtx = this.globeCanvas.getContext('2d');
 
@@ -339,6 +340,21 @@ const KnexVisualizer = {
             this.startAnimationLoop();
             this.startStatsTimer();
             this.startMinimap();
+
+            // Explainer overlay dismiss handler
+            const explainer = document.getElementById('dagExplainer');
+            const explainerDismiss = document.getElementById('dagExplainerDismiss');
+            if (explainer) {
+                if (localStorage.getItem('dagExplainerDismissed') === '1') {
+                    explainer.classList.add('dismissed');
+                }
+                if (explainerDismiss) {
+                    explainerDismiss.addEventListener('click', () => {
+                        explainer.classList.add('dismissed');
+                        localStorage.setItem('dagExplainerDismissed', '1');
+                    });
+                }
+            }
 
             // Seed with recent blocks from API if DAG is empty
             if (this.graph.order === 0) {
@@ -463,13 +479,16 @@ const KnexVisualizer = {
             result.highlighted = true;
         }
 
-        // 10. Globe mode — store visual color/size for globe overlay,
-        // then make sigma's circle nearly invisible (kept for hit-detection)
+        // 10. Globe mode — store visual data for globe overlay,
+        // then make sigma's circle/label invisible (kept for hit-detection)
         this.globeNodeData.set(node, {
             color: result.color || data.color,
-            size: result.size || data.size,
+            size: Math.max(result.size || data.size, 4),
+            label: result.label || data.label || '',
+            blockType: data.blockType,
         });
         result.color = 'rgba(0,0,0,0.01)';
+        result.label = ''; // suppress sigma labels — we draw our own on the globe canvas
 
         return result;
     },
@@ -531,6 +550,9 @@ const KnexVisualizer = {
             }
         }
 
+        // 6. Make sigma edges invisible — we draw our own on the globe canvas
+        result.color = 'rgba(0,0,0,0.01)';
+
         return result;
     },
 
@@ -563,11 +585,27 @@ const KnexVisualizer = {
         const x = (Math.random() - 0.5) * 20;
         const y = (Math.random() - 0.5) * 20;
 
-        // Label: check known accounts first
+        // Label: type-prefixed with amount or known account name
+        const typePrefix = type.charAt(0).toUpperCase();
         let label = hash.slice(0, 8);
+        let amountLabel = '';
+        if (rawAmount > 0n) {
+            const numericAmount = Number(rawAmount) / 1e7;
+            if (numericAmount >= 1e6) amountLabel = (numericAmount / 1e6).toFixed(1) + 'M';
+            else if (numericAmount >= 1e3) amountLabel = (numericAmount / 1e3).toFixed(1) + 'K';
+            else amountLabel = numericAmount.toFixed(numericAmount < 1 ? 2 : 0);
+        }
         if (data.account) {
             const known = typeof KnexAccount !== 'undefined' && KnexAccount.knownAccounts?.[data.account];
-            label = known ? known.label : data.account.slice(0, 6) + '..';
+            if (known) {
+                label = `${typePrefix}: ${known.label}`;
+            } else if (amountLabel) {
+                label = `${typePrefix}: ${amountLabel}`;
+            } else {
+                label = `${typePrefix}: ${data.account.slice(0, 8)}`;
+            }
+        } else {
+            label = amountLabel ? `${typePrefix}: ${amountLabel}` : hash.slice(0, 8);
         }
 
         this.graph.addNode(hash, {
@@ -600,7 +638,7 @@ const KnexVisualizer = {
                 targetSize: size,
             });
             const amountStr = typeof Explorer !== 'undefined' ? Explorer.formatAmount(data.amount || '0') : data.amount;
-            Explorer.showToast(`🐋 Whale ${type}: ${amountStr} KNEX`, 'info');
+            Explorer.showToast(`WHALE ${type.toUpperCase()}: ${amountStr} KNEX`, 'info');
         }
 
         // Track for TPS
@@ -616,6 +654,7 @@ const KnexVisualizer = {
                     size: 1,
                     edgeType: 'chain',
                 });
+                this.edgePulses.push({ src: prev, tgt: hash, startTime: performance.now(), duration: 1200 });
             }
         }
 
@@ -629,6 +668,7 @@ const KnexVisualizer = {
                     edgeType: 'transfer',
                     amount: data.amount || '0',
                 });
+                this.edgePulses.push({ src: hash, tgt: data.destination, startTime: performance.now(), duration: 1200 });
             }
         }
 
@@ -642,6 +682,7 @@ const KnexVisualizer = {
                     edgeType: 'transfer',
                     amount: data.amount || '0',
                 });
+                this.edgePulses.push({ src: data.source, tgt: hash, startTime: performance.now(), duration: 1200 });
             }
         }
 
@@ -746,20 +787,29 @@ const KnexVisualizer = {
         if (!canvas || !ctx || !this.renderer || !this.graph) return;
 
         const dpr = window.devicePixelRatio || 1;
-        const w = canvas.offsetWidth;
-        const h = canvas.offsetHeight;
+        const container = document.getElementById('dagContainer');
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
         if (w === 0 || h === 0) return;
 
-        if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
+        if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
         }
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
 
         const rot = this.globeRotation;
 
-        // Draw a wireframe globe for each visible node
+        // 1. Draw edges (white lines with neon yellow pulses)
+        this.drawEdges(ctx, w, h);
+
+        // 2. Draw wireframe globe for each visible node
+        const camera = this.renderer.getCamera();
+        const cameraRatio = camera ? camera.getState().ratio : 1;
+
         this.graph.forEachNode((node, attrs) => {
             const displayData = this.renderer.getNodeDisplayData(node);
             if (!displayData || displayData.hidden) return;
@@ -772,6 +822,22 @@ const KnexVisualizer = {
 
             const color = (globe ? globe.color : attrs.color) || '#FF8C00';
             this._drawWireframeGlobe(ctx, x, y, r, color, rot, node);
+
+            // 3. Draw label below globe
+            const label = globe?.label || '';
+            if (label && r > 4 && cameraRatio < 3) {
+                const fontSize = Math.max(8, Math.min(11, r * 0.7));
+                ctx.globalAlpha = 0.9;
+                ctx.font = `500 ${fontSize}px JetBrains Mono`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                // Dark shadow for readability
+                ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                ctx.fillText(label, x + 1, y + r + 5);
+                ctx.fillStyle = color;
+                ctx.fillText(label, x, y + r + 4);
+                ctx.globalAlpha = 1;
+            }
         });
     },
 
@@ -826,6 +892,96 @@ const KnexVisualizer = {
         ctx.fill();
 
         ctx.globalAlpha = 1;
+    },
+
+    // =============================================
+    // CUSTOM EDGE RENDERING — White lines + neon yellow pulses
+    // =============================================
+    drawEdges(ctx, w, h) {
+        if (!this.graph || !this.renderer) return;
+        const now = performance.now();
+
+        // Draw all visible edges as white base lines
+        this.graph.forEachEdge((edge, attrs, src, tgt) => {
+            if (attrs.hidden) return;
+            const srcData = this.renderer.getNodeDisplayData(src);
+            const tgtData = this.renderer.getNodeDisplayData(tgt);
+            if (!srcData || !tgtData || srcData.hidden || tgtData.hidden) return;
+
+            ctx.beginPath();
+            ctx.moveTo(srcData.x, srcData.y);
+            ctx.lineTo(tgtData.x, tgtData.y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+
+        // Draw active pulses
+        ctx.save();
+        for (let i = this.edgePulses.length - 1; i >= 0; i--) {
+            const pulse = this.edgePulses[i];
+            const elapsed = now - pulse.startTime;
+            const t = Math.min(elapsed / pulse.duration, 1);
+
+            // Remove completed pulses
+            if (t >= 1) {
+                this.edgePulses.splice(i, 1);
+                continue;
+            }
+
+            // Get node positions
+            if (!this.graph.hasNode(pulse.src) || !this.graph.hasNode(pulse.tgt)) {
+                this.edgePulses.splice(i, 1);
+                continue;
+            }
+            const srcData = this.renderer.getNodeDisplayData(pulse.src);
+            const tgtData = this.renderer.getNodeDisplayData(pulse.tgt);
+            if (!srcData || !tgtData) continue;
+
+            // Elastic easing position
+            const easedT = this._elasticOut(t);
+            const px = srcData.x + (tgtData.x - srcData.x) * easedT;
+            const py = srcData.y + (tgtData.y - srcData.y) * easedT;
+
+            // Trail: draw a thick fading line segment from slightly behind the pulse
+            const trailT = Math.max(0, easedT - 0.12);
+            const tx = srcData.x + (tgtData.x - srcData.x) * trailT;
+            const ty = srcData.y + (tgtData.y - srcData.y) * trailT;
+
+            ctx.beginPath();
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(px, py);
+            ctx.strokeStyle = 'rgba(255,229,0,0.4)';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#FFE500';
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Neon yellow glow dot at pulse head
+            ctx.beginPath();
+            ctx.arc(px, py, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFE500';
+            ctx.shadowColor = '#FFE500';
+            ctx.shadowBlur = 14;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Bright core
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+        }
+        ctx.restore();
+    },
+
+    /**
+     * Elastic ease-out — overshoots then settles (bouncy feel)
+     */
+    _elasticOut(t) {
+        if (t === 0 || t === 1) return t;
+        return Math.pow(2, -10 * t) * Math.sin((t - 0.1) * 5 * Math.PI) + 1;
     },
 
     // =============================================
@@ -1014,7 +1170,9 @@ const KnexVisualizer = {
         const pinBtn = menu.querySelector('[data-action="pinNode"]');
         if (pinBtn) {
             const isPinned = this.state.pinnedNodes.has(this.state.contextMenuTarget);
-            pinBtn.textContent = isPinned ? '📌 Unpin Node' : '📌 Pin Node';
+            pinBtn.innerHTML = isPinned
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M12 17v5M9 11V4a1 1 0 011-1h4a1 1 0 011 1v7"/><path d="M5 17h14l-1.5-6H6.5z"/></svg>Unpin Node'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M12 17v5M9 11V4a1 1 0 011-1h4a1 1 0 011 1v7"/><path d="M5 17h14l-1.5-6H6.5z"/></svg>Pin Node';
         }
     },
 

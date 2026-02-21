@@ -243,6 +243,20 @@
                 <span class="dag-time-label" id="dagTimeLabel">Live</span>
             </div>
 
+            <!-- DAG Explainer Overlay -->
+            <div class="dag-explainer" id="dagExplainer">
+                <div class="dag-explainer-title">DAG Visualizer</div>
+                <div class="dag-explainer-body">
+                    Each node is a block on the KnexCoin ledger, rendered as a wireframe globe and colored by type:
+                    <strong style="color:#ff3b3b">Send</strong>,
+                    <strong style="color:#00e676">Receive</strong>,
+                    <strong style="color:#448aff">Open</strong>,
+                    <strong style="color:#bb86fc">Change</strong>.
+                    Larger nodes represent larger amounts. Yellow pulses show new connections forming between blocks.
+                </div>
+                <button class="dag-explainer-dismiss" id="dagExplainerDismiss">Got it</button>
+            </div>
+
             <!-- DAG container with overlays -->
             <div style="position:relative">
                 <div id="dagContainer"></div>
@@ -256,10 +270,10 @@
                 <canvas id="dagMinimap" width="140" height="90"></canvas>
                 <!-- Context menu -->
                 <div class="dag-context-menu hidden" id="dagContextMenu">
-                    <button data-action="viewAccount">&#128100; View Account</button>
-                    <button data-action="copyHash">&#128203; Copy Hash</button>
-                    <button data-action="highlightChain">&#128279; Highlight Chain</button>
-                    <button data-action="pinNode">&#128204; Pin Node</button>
+                    <button data-action="viewAccount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>View Account</button>
+                    <button data-action="copyHash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy Hash</button>
+                    <button data-action="highlightChain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Highlight Chain</button>
+                    <button data-action="pinNode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M12 17v5M9 11V4a1 1 0 011-1h4a1 1 0 011 1v7"/><path d="M5 17h14l-1.5-6H6.5z"/></svg>Pin Node</button>
                 </div>
             </div>
 
@@ -270,6 +284,12 @@
                 <span class="dag-legend-item"><span class="legend-dot" style="background:#bb86fc"></span>Change</span>
                 <span class="dag-legend-item"><span class="legend-dot" style="background:#4dd0e1"></span>BW</span>
                 <span class="dag-legend-item"><span class="legend-dot" style="background:#ffc107"></span>Pending</span>
+                <span class="dag-legend-sep"></span>
+                <span class="dag-legend-item"><span class="legend-line"></span>Chain</span>
+                <span class="dag-legend-item"><span class="legend-line dashed"></span>Transfer</span>
+                <span class="dag-legend-item"><span class="legend-pulse-dot"></span>New Link</span>
+                <span class="dag-legend-sep"></span>
+                <span class="dag-legend-item" style="color:var(--text-muted)">Size = amount</span>
                 <span class="dag-node-count" id="dagNodeCount">0 nodes</span>
             </div>
         </div>
