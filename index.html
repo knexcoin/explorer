@@ -115,6 +115,12 @@
                 </svg>
                 Blocks
             </button>
+            <button class="view-tab" data-view="core" id="tabCore">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg>
+                Core
+            </button>
         </div>
     </nav>
 
@@ -318,6 +324,35 @@
             </div>
         </div>
 
+        <!-- Core — Validator Topology Panel -->
+        <div class="content-panel hidden" id="corePanel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                    </svg>
+                    Core — Validator Topology
+                </h2>
+                <div class="panel-actions">
+                    <button class="btn-small" id="refreshCore" title="Refresh">Refresh</button>
+                </div>
+            </div>
+            <!-- Topology visualization -->
+            <div class="core-topology-wrapper">
+                <canvas id="coreTopologyCanvas" width="800" height="400"></canvas>
+                <div class="core-consensus-badge" id="coreConsensusBadge">
+                    <span class="core-consensus-label">Consensus</span>
+                    <span class="core-consensus-value" id="coreConsensusStatus">--</span>
+                </div>
+            </div>
+            <!-- Validator cards -->
+            <div class="core-validators-grid" id="coreValidatorsGrid">
+                <div class="feed-empty"><span class="spinner-inline"></span> Loading validators...</div>
+            </div>
+            <!-- PoB Status -->
+            <div class="core-pob-bar" id="corePobBar"></div>
+        </div>
+
         <!-- Account Detail View (hidden by default) -->
         <div class="content-panel hidden" id="accountPanel">
             <div class="breadcrumb" id="accountBreadcrumb">
@@ -445,6 +480,7 @@
                 <div class="shortcut-row"><kbd>3</kbd><span>Network tab</span></div>
                 <div class="shortcut-row"><kbd>4</kbd><span>Rich List tab</span></div>
                 <div class="shortcut-row"><kbd>5</kbd><span>Blocks tab</span></div>
+                <div class="shortcut-row"><kbd>6</kbd><span>Core tab</span></div>
                 <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
             </div>
         </div>

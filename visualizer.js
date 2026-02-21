@@ -35,6 +35,10 @@ const KnexVisualizer = {
     minimapTimer: null,
     statsTimer: null,
     animationFrame: null,
+    globeCanvas: null,
+    globeCtx: null,
+    globeRotation: 0,  // auto-rotation angle in radians
+    globeNodeData: new Map(), // node → { color, size } for globe overlay
 
     // Block data storage for time slider / search / path finding
     blockData: new Map(),   // hash → full block data
@@ -262,6 +266,13 @@ const KnexVisualizer = {
                 allowInvalidContainer: true,
             });
 
+            // Globe overlay canvas — wireframe sphere nodes
+            this.globeCanvas = document.createElement('canvas');
+            this.globeCanvas.className = 'dag-globe-overlay';
+            this.globeCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;';
+            container.appendChild(this.globeCanvas);
+            this.globeCtx = this.globeCanvas.getContext('2d');
+
             // Register composited reducers
             this.renderer.setSetting('nodeReducer', (node, data) => this._nodeReducer(node, data));
             this.renderer.setSetting('edgeReducer', (edge, data) => this._edgeReducer(edge, data));
@@ -451,6 +462,14 @@ const KnexVisualizer = {
         if (this.state.hoveredNode === node) {
             result.highlighted = true;
         }
+
+        // 10. Globe mode — store visual color/size for globe overlay,
+        // then make sigma's circle nearly invisible (kept for hit-detection)
+        this.globeNodeData.set(node, {
+            color: result.color || data.color,
+            size: result.size || data.size,
+        });
+        result.color = 'rgba(0,0,0,0.01)';
 
         return result;
     },
@@ -710,9 +729,103 @@ const KnexVisualizer = {
             if (this.state.animatingNodes.size > 0 && this.renderer) {
                 this.renderer.refresh();
             }
+            // Auto-rotate globes and redraw overlay
+            this.globeRotation += 0.006; // ~0.34°/frame → full rotation ~18s at 60fps
+            this.drawGlobes();
             this.animationFrame = requestAnimationFrame(loop);
         };
         this.animationFrame = requestAnimationFrame(loop);
+    },
+
+    // =============================================
+    // WIREFRAME GLOBE OVERLAY
+    // =============================================
+    drawGlobes() {
+        const canvas = this.globeCanvas;
+        const ctx = this.globeCtx;
+        if (!canvas || !ctx || !this.renderer || !this.graph) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.offsetWidth;
+        const h = canvas.offsetHeight;
+        if (w === 0 || h === 0) return;
+
+        if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+
+        const rot = this.globeRotation;
+
+        // Draw a wireframe globe for each visible node
+        this.graph.forEachNode((node, attrs) => {
+            const displayData = this.renderer.getNodeDisplayData(node);
+            if (!displayData || displayData.hidden) return;
+
+            const globe = this.globeNodeData.get(node);
+            const x = displayData.x;
+            const y = displayData.y;
+            const r = ((globe ? globe.size : attrs.size) || 6) * 1.8;
+            if (r < 2) return;
+
+            const color = (globe ? globe.color : attrs.color) || '#FF8C00';
+            this._drawWireframeGlobe(ctx, x, y, r, color, rot, node);
+        });
+    },
+
+    /**
+     * Draw a single wireframe globe at (cx, cy) with radius r.
+     * Projects longitude and latitude circles onto a 2D circle
+     * using a rotation angle for the auto-spin effect.
+     */
+    _drawWireframeGlobe(ctx, cx, cy, r, color, rotation, nodeKey) {
+        // Per-node rotation offset from hash for visual variety
+        const hashOffset = (nodeKey.charCodeAt(0) + nodeKey.charCodeAt(1)) * 0.1;
+        const rot = rotation + hashOffset;
+
+        const alpha = 0.7;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(0.5, r / 20);
+        ctx.globalAlpha = alpha;
+
+        // 1. Draw equator (outer circle)
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 2. Latitude lines (horizontal ellipses)
+        const latCount = 3;
+        for (let i = 1; i <= latCount; i++) {
+            const lat = (i / (latCount + 1)) * Math.PI - Math.PI / 2; // -60° to +60°
+            const yOff = Math.sin(lat) * r;
+            const rLat = Math.cos(lat) * r;
+
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + yOff, rLat, rLat * 0.15, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // 3. Longitude lines (vertical ellipses, rotated by auto-spin)
+        const lonCount = 4;
+        for (let i = 0; i < lonCount; i++) {
+            const angle = rot + (i / lonCount) * Math.PI;
+            const horizScale = Math.cos(angle); // perspective squish
+
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, Math.abs(horizScale) * r, r, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // 4. Subtle inner glow
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
     },
 
     // =============================================

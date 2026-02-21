@@ -945,6 +945,199 @@ body, .header, .search-section, .content-panel, .footer,
     background: rgba(255,255,255,0.5);
 }
 
+/* ======= CORE — VALIDATOR TOPOLOGY ======= */
+.core-topology-wrapper {
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    overflow: hidden;
+}
+
+#coreTopologyCanvas {
+    width: 100%;
+    height: 400px;
+    display: block;
+}
+
+.core-consensus-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    backdrop-filter: blur(8px);
+    text-align: right;
+}
+
+.core-consensus-label {
+    display: block;
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.core-consensus-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green);
+}
+
+/* Validator Cards Grid */
+.core-validators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
+
+.core-validator-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.core-validator-card:hover {
+    border-color: var(--orange);
+    transform: translateY(-2px);
+}
+
+.core-validator-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.core-validator-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--orange);
+}
+
+.core-validator-addr {
+    font-size: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.core-validator-addr:hover {
+    color: var(--orange);
+}
+
+.core-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: auto;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.core-validator-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.core-vstat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.core-vstat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.core-vstat-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Reputation bar */
+.core-rep-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.core-rep-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+
+/* PoB Status Bar */
+.core-pob-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    background: rgba(255,255,255,0.01);
+}
+
+.core-pob-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.core-pob-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.core-pob-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+}
+
+/* Light theme overrides for Core */
+[data-theme="light"] .core-validator-card {
+    background: #fff;
+}
+
+[data-theme="light"] .core-validator-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .core-consensus-badge {
+    background: rgba(255,255,255,0.9);
+}
+
+[data-theme="light"] .core-topology-wrapper {
+    background: #fafafa;
+}
+
+[data-theme="light"] .core-pob-bar {
+    background: rgba(0,0,0,0.02);
+}
+
+[data-theme="light"] .core-rep-bar {
+    background: rgba(0,0,0,0.06);
+}
+
 /* ======= ANIMATIONS ======= */
 .content-panel:not(.hidden) {
     animation: panelFadeIn 0.25s ease;
@@ -1018,6 +1211,19 @@ body, .header, .search-section, .content-panel, .footer,
         height: 64px;
     }
 
+    #coreTopologyCanvas {
+        height: 280px;
+    }
+
+    .core-validators-grid {
+        grid-template-columns: 1fr;
+        padding: 12px;
+    }
+
+    .core-validator-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
     .flow-diagram {
         padding: 16px 12px;
     }
@@ -1078,6 +1284,15 @@ body, .header, .search-section, .content-panel, .footer,
 
     #dagPanel.dag-fullscreen #dagContainer {
         height: calc(100vh - 200px);
+    }
+
+    #coreTopologyCanvas {
+        height: 220px;
+    }
+
+    .core-pob-bar {
+        flex-direction: column;
+        gap: 10px;
     }
 
     .flow-diagram {

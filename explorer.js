@@ -152,6 +152,7 @@ const Explorer = {
         if (typeof KnexAccount !== 'undefined') KnexAccount.init();
         if (typeof KnexFlow !== 'undefined') KnexFlow.init();
         if (typeof KnexVisualizer !== 'undefined') KnexVisualizer.init();
+        if (typeof KnexCore !== 'undefined') KnexCore.init();
 
         // Error banner bindings
         const retryBtn = document.getElementById('errorRetryBtn');
@@ -221,6 +222,9 @@ const Explorer = {
                     break;
                 case '5':
                     document.getElementById('tabBlocks')?.click();
+                    break;
+                case '6':
+                    document.getElementById('tabCore')?.click();
                     break;
                 case '?':
                     e.preventDefault();
@@ -1258,7 +1262,7 @@ const Explorer = {
             KnexVisualizer.destroy();
         }
 
-        const panels = ['liveFeedPanel', 'dagPanel', 'statsPanel', 'accountPanel', 'blockPanel', 'richListPanel', 'blocksPanel'];
+        const panels = ['liveFeedPanel', 'dagPanel', 'statsPanel', 'accountPanel', 'blockPanel', 'richListPanel', 'blocksPanel', 'corePanel'];
         panels.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
@@ -1274,6 +1278,7 @@ const Explorer = {
             statsPanel: 'stats',
             richListPanel: 'richlist',
             blocksPanel: 'blocks',
+            corePanel: 'core',
         };
         this.state.currentView = viewMap[panelId] || 'block';
 
