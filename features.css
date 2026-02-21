@@ -48,6 +48,11 @@ body, .header, .search-section, .content-panel, .footer,
     background: #f8f3ee;
 }
 
+[data-theme="light"] .qr-container {
+    background: rgba(255,140,0,0.04);
+    border-color: rgba(255,140,0,0.2);
+}
+
 [data-theme="light"] .account-qr {
     background: #fff;
     border: 1px solid var(--border);
@@ -404,11 +409,38 @@ body, .header, .search-section, .content-panel, .footer,
     display: none;
 }
 
+/* QR Container — matches PWA glass-morphism style */
+.qr-container {
+    border-radius: 20px;
+    border: 1px solid rgba(255,215,0,0.28);
+    background: rgba(255,140,0,0.06);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 240px;
+    width: 100%;
+}
+
 .account-qr {
+    width: 240px;
+    height: 240px;
     background: #fff;
     padding: 8px;
-    border-radius: var(--radius-md);
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     flex-shrink: 0;
+}
+
+.account-qr img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
 }
 
 .known-badge {
@@ -997,6 +1029,16 @@ body, .header, .search-section, .content-panel, .footer,
 
     .account-enrichment {
         flex-direction: column;
+    }
+
+    .qr-container {
+        padding: 16px;
+        min-height: 200px;
+    }
+
+    .account-qr {
+        width: 200px;
+        height: 200px;
     }
 }
 

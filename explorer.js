@@ -466,8 +466,18 @@ const Explorer = {
     // WEBSOCKET
     // =============================================
     connectWebSocket() {
+        // Skip if already connected or connecting
         if (this.state.ws) {
+            const rs = this.state.ws.readyState;
+            if (rs === WebSocket.OPEN) return;
+            if (rs === WebSocket.CONNECTING) return;
             this.state.ws.close();
+        }
+
+        // Clear any existing ping timer
+        if (this.state.pingTimer) {
+            clearInterval(this.state.pingTimer);
+            this.state.pingTimer = null;
         }
 
         this.updateWsStatus('connecting');
@@ -480,11 +490,19 @@ const Explorer = {
                 this.state.reconnectAttempts = 0;
                 this.updateWsStatus('connected');
                 this.hideError();
+
+                // Keep-alive ping every 30s to prevent idle disconnect
+                this.state.pingTimer = setInterval(() => {
+                    if (this.state.ws && this.state.ws.readyState === WebSocket.OPEN) {
+                        this.state.ws.send('{"type":"ping"}');
+                    }
+                }, 30000);
             };
 
             this.state.ws.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
+                    if (msg.type === 'pong') return; // Ignore keep-alive replies
                     this.handleWsMessage(msg);
                 } catch (e) {
                     console.warn('[WS] Parse error:', e);
@@ -493,13 +511,17 @@ const Explorer = {
 
             this.state.ws.onclose = (event) => {
                 console.log('[WS] Disconnected:', event.code, event.reason);
+                if (this.state.pingTimer) {
+                    clearInterval(this.state.pingTimer);
+                    this.state.pingTimer = null;
+                }
                 this.updateWsStatus('disconnected');
                 this.scheduleReconnect();
             };
 
             this.state.ws.onerror = (error) => {
                 console.warn('[WS] Error:', error);
-                this.updateWsStatus('disconnected');
+                // Don't set disconnected here — onclose will fire after onerror
             };
         } catch (e) {
             console.error('[WS] Failed to connect:', e);

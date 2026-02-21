@@ -646,17 +646,22 @@ const KnexAccount = {
             container.appendChild(badge);
         }
 
-        // 2. QR Code
+        // 2. QR Code (PWA-style glass container, centered)
         if (typeof qrcode !== 'undefined') {
             try {
                 const qr = qrcode(0, 'M');
                 qr.addData(address);
                 qr.make();
 
-                const qrDiv = document.createElement('div');
-                qrDiv.className = 'account-qr';
-                qrDiv.innerHTML = qr.createImgTag(3, 0);
-                container.appendChild(qrDiv);
+                const qrContainer = document.createElement('div');
+                qrContainer.className = 'qr-container';
+
+                const qrBox = document.createElement('div');
+                qrBox.className = 'account-qr';
+                qrBox.innerHTML = qr.createImgTag(3, 0);
+
+                qrContainer.appendChild(qrBox);
+                container.appendChild(qrContainer);
             } catch (e) {
                 console.warn('[QR] Generation failed:', e);
             }
