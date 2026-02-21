@@ -68,6 +68,15 @@ body, .header, .search-section, .content-panel, .footer,
     background: #fff;
 }
 
+[data-theme="light"] .top-account-row {
+    background: rgba(0,0,0,0.02);
+    border-color: rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .top-account-row:hover {
+    background: rgba(255,140,0,0.05);
+}
+
 [data-theme="light"] .modal-card {
     background: #fff;
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
@@ -257,6 +266,129 @@ body, .header, .search-section, .content-panel, .footer,
     height: 40px;
     margin-top: 8px;
     border-radius: var(--radius-sm);
+}
+
+/* Wide stat cards (span 2 columns) */
+.stat-card-wide {
+    grid-column: span 2;
+}
+
+/* Network Pulse — visual heartbeat on new block */
+.network-pulse {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    border: 2px solid transparent;
+    opacity: 0;
+}
+
+.network-pulse.pulse-animate {
+    animation: netPulse 0.8s ease-out;
+}
+
+@keyframes netPulse {
+    0% {
+        border-color: var(--green);
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    100% {
+        border-color: transparent;
+        opacity: 0;
+        transform: scale(1.02);
+    }
+}
+
+/* Stat card needs relative for pulse overlay */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Block Type Distribution */
+.type-distribution {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.type-distribution canvas {
+    flex-shrink: 0;
+}
+
+.type-distribution-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.type-dist-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.type-dist-item .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.type-dist-count {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Top Accounts List */
+.top-accounts-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.top-account-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s;
+}
+
+.top-account-row:hover {
+    background: rgba(255,140,0,0.06);
+}
+
+.top-account-rank {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 22px;
+}
+
+.top-account-stats {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 600;
 }
 
 /* ======= ACCOUNT ENRICHMENT ======= */
@@ -822,6 +954,15 @@ body, .header, .search-section, .content-panel, .footer,
         gap: 10px;
     }
 
+    .stat-card-wide {
+        grid-column: span 2;
+    }
+
+    .type-distribution {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
     #dagContainer {
         height: 350px;
     }
@@ -866,6 +1007,10 @@ body, .header, .search-section, .content-panel, .footer,
 
     .stats-grid {
         grid-template-columns: 1fr;
+    }
+
+    .stat-card-wide {
+        grid-column: span 1;
     }
 
     #dagContainer {
