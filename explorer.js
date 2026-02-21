@@ -46,6 +46,76 @@ const Explorer = {
     },
 
     // =============================================
+    // IDENTICON CACHE & HELPERS
+    // =============================================
+    identiconCache: new Map(),
+
+    async createIdenticon(address, size = 16) {
+        if (!address || !this.isValidAddress(address)) return null;
+
+        const cacheKey = `${address}:${size}`;
+        const wrapper = document.createElement('span');
+        wrapper.className = size >= 48 ? 'identicon-account' : 'identicon-inline';
+
+        // Check cache for pre-rendered data URL
+        if (this.identiconCache.has(cacheKey)) {
+            const img = document.createElement('img');
+            img.src = this.identiconCache.get(cacheKey);
+            img.width = size;
+            img.height = size;
+            img.className = 'identicon-img';
+            img.alt = '';
+            wrapper.appendChild(img);
+            return wrapper;
+        }
+
+        // Generate fresh
+        if (typeof KnexIdenticon === 'undefined') return null;
+        const temp = document.createElement('span');
+        try {
+            await KnexIdenticon.generate(address, temp, size);
+        } catch (e) {
+            return null;
+        }
+        const canvas = temp.querySelector('canvas');
+        if (canvas) {
+            const dataUrl = canvas.toDataURL('image/png');
+
+            // Evict oldest entries if cache is too large
+            if (this.identiconCache.size > 500) {
+                const keys = [...this.identiconCache.keys()];
+                for (let i = 0; i < 100; i++) {
+                    this.identiconCache.delete(keys[i]);
+                }
+            }
+
+            this.identiconCache.set(cacheKey, dataUrl);
+
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.width = size;
+            img.height = size;
+            img.className = 'identicon-img';
+            img.alt = '';
+            wrapper.appendChild(img);
+        }
+        return wrapper;
+    },
+
+    attachIdenticons(containerEl, size = 16) {
+        const addressEls = containerEl.querySelectorAll('.feed-address[data-address]');
+        for (const addrEl of addressEls) {
+            const address = addrEl.dataset.address;
+            if (!address || !this.isValidAddress(address)) continue;
+            this.createIdenticon(address, size).then(icon => {
+                if (icon && addrEl.parentNode) {
+                    addrEl.insertBefore(icon, addrEl.firstChild);
+                }
+            });
+        }
+    },
+
+    // =============================================
     // EVENT DISPATCH
     // =============================================
     on(event, callback) {
@@ -557,6 +627,8 @@ const Explorer = {
             </div>
         `;
 
+        this.attachIdenticons(el);
+
         el.addEventListener('click', (e) => {
             const addrEl = e.target.closest('.feed-address');
             if (addrEl) {
@@ -641,6 +713,19 @@ const Explorer = {
         document.querySelector('#historyFilterGroup .filter-chip[data-filter="all"]')?.classList.add('active');
 
         document.getElementById('accountAddress').textContent = address;
+
+        // Add large identicon to account header
+        const addrRow = document.getElementById('accountHeader')?.querySelector('.account-address-row');
+        if (addrRow) {
+            const existingIcon = addrRow.querySelector('.identicon-account');
+            if (existingIcon) existingIcon.remove();
+            this.createIdenticon(address, 48).then(icon => {
+                if (icon && addrRow) {
+                    addrRow.insertBefore(icon, addrRow.querySelector('.account-address') || addrRow.querySelector('#accountAddress'));
+                }
+            });
+        }
+
         document.getElementById('accountBalance').textContent = '...';
         document.getElementById('accountPending').textContent = '...';
         document.getElementById('accountBlockCount').textContent = '...';
@@ -670,6 +755,11 @@ const Explorer = {
                 if (rep !== 'None' && this.isValidAddress(rep)) {
                     repEl.style.cursor = 'pointer';
                     repEl.onclick = () => this.lookupAccount(rep);
+                    this.createIdenticon(rep, 16).then(icon => {
+                        if (icon && repEl.parentNode) {
+                            repEl.insertBefore(icon, repEl.firstChild);
+                        }
+                    });
                 }
             } else {
                 const err = await infoRes.json().catch(() => ({}));
@@ -754,6 +844,8 @@ const Explorer = {
                     ${tx.memo ? `<div class="feed-memo">${this.escapeHtml(tx.memo)}</div>` : ''}
                 </div>
             `;
+
+            this.attachIdenticons(el);
 
             el.addEventListener('click', (e) => {
                 const addrEl = e.target.closest('.feed-address');
@@ -900,6 +992,15 @@ const Explorer = {
 
             row.appendChild(label);
             row.appendChild(value);
+            // Add identicon to address-link fields
+            if (f.class && f.class.includes('address-link') && f.value && this.isValidAddress(f.value)) {
+                this.createIdenticon(f.value, 16).then(icon => {
+                    if (icon && value.parentNode) {
+                        value.insertBefore(icon, value.firstChild);
+                    }
+                });
+            }
+
             fieldsEl.appendChild(row);
         }
 
@@ -993,9 +1094,19 @@ const Explorer = {
                 <span class="rl-pct">${pct}%</span>
             `;
 
-            row.querySelector('.address-link')?.addEventListener('click', () => {
+            const addrLink = row.querySelector('.address-link');
+            addrLink?.addEventListener('click', () => {
                 this.lookupAccount(address);
             });
+
+            // Add identicon to rich list row
+            if (addrLink && this.isValidAddress(address)) {
+                this.createIdenticon(address, 16).then(icon => {
+                    if (icon && addrLink.parentNode) {
+                        addrLink.insertBefore(icon, addrLink.firstChild);
+                    }
+                });
+            }
 
             table.appendChild(row);
         });
@@ -1069,6 +1180,8 @@ const Explorer = {
                     <div class="feed-hash">${this.truncateHash(hash)}</div>
                 </div>
             `;
+
+            this.attachIdenticons(el);
 
             el.addEventListener('click', (e) => {
                 const addrEl = e.target.closest('.feed-address');

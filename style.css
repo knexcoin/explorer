@@ -656,6 +656,9 @@ a:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
 }
 .feed-address:hover {
     color: var(--gold);
@@ -1288,5 +1291,62 @@ a:hover {
 
     .search-shortcut {
         display: none;
+    }
+}
+
+/* ======= IDENTICONS ======= */
+
+.identicon-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 6px;
+    vertical-align: middle;
+    line-height: 0;
+}
+
+.identicon-img {
+    border-radius: 3px;
+    image-rendering: pixelated;
+    vertical-align: middle;
+}
+
+.identicon-account {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 10px;
+    line-height: 0;
+}
+
+.identicon-account .identicon-img {
+    border-radius: 6px;
+}
+
+.block-field-value.address-link {
+    display: inline-flex;
+    align-items: center;
+}
+
+.rl-address .address-link {
+    display: inline-flex;
+    align-items: center;
+}
+
+.account-stat-value.account-stat-addr {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+@media (max-width: 480px) {
+    .identicon-inline .identicon-img {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    .identicon-account .identicon-img {
+        width: 36px !important;
+        height: 36px !important;
     }
 }
