@@ -164,6 +164,11 @@
                     DAG Visualizer
                 </h2>
                 <div class="panel-actions">
+                    <button class="btn-icon" id="dagPathFinderBtn" title="Path finder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M18 8A6 6 0 006 8c0 7-6 9-6 9h24s-6-2-6-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+                        </svg>
+                    </button>
                     <button class="btn-icon" id="dagResetBtn" title="Reset view">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M1 4v6h6M23 20v-6h-6"/>
@@ -176,14 +181,89 @@
                             <circle cx="12" cy="13" r="4"/>
                         </svg>
                     </button>
+                    <button class="btn-icon" id="dagRecordBtn" title="Record GIF">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" id="dagFullscreenBtn" title="Fullscreen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
-            <div id="dagContainer"></div>
+
+            <!-- DAG Toolbar -->
+            <div class="dag-toolbar" id="dagToolbar">
+                <!-- Block type filters -->
+                <div class="dag-filter-section">
+                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="send" checked><span class="legend-dot" style="background:#ff3b3b"></span>Send</label>
+                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="receive" checked><span class="legend-dot" style="background:#00e676"></span>Recv</label>
+                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="open" checked><span class="legend-dot" style="background:#448aff"></span>Open</label>
+                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="change" checked><span class="legend-dot" style="background:#bb86fc"></span>Chg</label>
+                </div>
+                <div class="dag-toolbar-sep"></div>
+                <!-- Edge toggles -->
+                <div class="dag-filter-section">
+                    <label class="dag-filter-toggle"><input type="checkbox" id="dagShowChainEdges" checked>Chain</label>
+                    <label class="dag-filter-toggle"><input type="checkbox" id="dagShowTransferEdges" checked>Transfer</label>
+                </div>
+                <div class="dag-toolbar-sep"></div>
+                <!-- Mode buttons -->
+                <button class="dag-mode-btn active" id="dagValueFlowBtn" title="Value flow edges">Flow</button>
+                <button class="dag-mode-btn" id="dagHeatmapBtn" title="Heatmap by age">Heat</button>
+                <div class="dag-toolbar-sep"></div>
+                <!-- Layout selector -->
+                <select class="dag-select" id="dagLayoutSelect">
+                    <option value="forceatlas2">ForceAtlas2</option>
+                    <option value="circular">Circular</option>
+                    <option value="random">Random</option>
+                </select>
+                <!-- Max nodes -->
+                <div class="dag-slider-group">
+                    <input type="range" id="dagMaxNodes" min="50" max="500" value="200" step="50" class="dag-range">
+                    <span class="dag-slider-label" id="dagMaxNodesLabel">200</span>
+                </div>
+                <div class="dag-toolbar-sep"></div>
+                <!-- Search -->
+                <input type="text" id="dagSearchInput" placeholder="Find..." class="dag-search-input">
+            </div>
+
+            <!-- Time slider -->
+            <div class="dag-time-row">
+                <button class="dag-time-play" id="dagTimePlayBtn" title="Replay">&#9654;</button>
+                <input type="range" id="dagTimeSlider" min="0" max="100" value="100" class="dag-range dag-time-slider-input">
+                <span class="dag-time-label" id="dagTimeLabel">Live</span>
+            </div>
+
+            <!-- DAG container with overlays -->
+            <div style="position:relative">
+                <div id="dagContainer"></div>
+                <!-- Stats overlay -->
+                <div class="dag-stats-overlay" id="dagStatsOverlay">
+                    <div><span id="dagTps">0.0</span> TPS</div>
+                    <div><span id="dagBps">0</span> blk/10s</div>
+                    <div><span id="dagActiveAccounts">0</span> accts</div>
+                </div>
+                <!-- Mini-map -->
+                <canvas id="dagMinimap" width="140" height="90"></canvas>
+                <!-- Context menu -->
+                <div class="dag-context-menu hidden" id="dagContextMenu">
+                    <button data-action="viewAccount">&#128100; View Account</button>
+                    <button data-action="copyHash">&#128203; Copy Hash</button>
+                    <button data-action="highlightChain">&#128279; Highlight Chain</button>
+                    <button data-action="pinNode">&#128204; Pin Node</button>
+                </div>
+            </div>
+
             <div class="dag-legend">
                 <span class="dag-legend-item"><span class="legend-dot" style="background:#ff3b3b"></span>Send</span>
                 <span class="dag-legend-item"><span class="legend-dot" style="background:#00e676"></span>Receive</span>
                 <span class="dag-legend-item"><span class="legend-dot" style="background:#448aff"></span>Open</span>
                 <span class="dag-legend-item"><span class="legend-dot" style="background:#bb86fc"></span>Change</span>
+                <span class="dag-legend-item"><span class="legend-dot" style="background:#4dd0e1"></span>BW</span>
+                <span class="dag-legend-item"><span class="legend-dot" style="background:#ffc107"></span>Pending</span>
                 <span class="dag-node-count" id="dagNodeCount">0 nodes</span>
             </div>
         </div>
