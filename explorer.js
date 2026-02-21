@@ -475,7 +475,7 @@ const Explorer = {
                 hash: msg.data.hash || '',
                 account: msg.data.account || '',
                 amount: msg.data.amount || msg.data.balance || '0',
-                timestamp: msg.data.timestamp || Math.floor(Date.now() / 1000),
+                timestamp: msg.data.timestamp || Date.now(),
                 memo: msg.data.memo || '',
                 destination: msg.data.destination || msg.data.link || '',
                 source: msg.data.source || '',
@@ -488,7 +488,7 @@ const Explorer = {
                 hash: msg.data.hash || msg.data.source || '',
                 account: msg.data.account || '',
                 amount: msg.data.amount || '0',
-                timestamp: Math.floor(Date.now() / 1000),
+                timestamp: Date.now(),
                 memo: '',
                 destination: msg.data.account || '',
                 source: msg.data.source || '',
@@ -972,7 +972,7 @@ const Explorer = {
             </div>
         `;
 
-        const totalSupply = 696900000000000n; // 69,690,000 KNEX in raw
+        const totalSupply = 1000000000000000n; // 100,000,000 KNEX in raw
 
         accounts.forEach((acc, i) => {
             const row = document.createElement('div');
@@ -1095,10 +1095,16 @@ const Explorer = {
                     (data.block_count || 0).toLocaleString();
                 document.getElementById('nodeUptime').textContent =
                     this.formatUptime(data.uptime_seconds || 0);
-                // Account count
+                // Account count (may not be returned by node)
                 const accCount = document.getElementById('accountCount');
-                if (accCount && data.account_count != null) {
-                    accCount.textContent = (data.account_count || 0).toLocaleString();
+                if (accCount) {
+                    accCount.textContent = data.account_count != null
+                        ? (data.account_count || 0).toLocaleString()
+                        : '--';
+                }
+                // Uptime may be 0 if not tracked by node
+                if (!data.uptime_seconds) {
+                    document.getElementById('nodeUptime').textContent = '--';
                 }
             }
         } catch (e) {
@@ -1110,6 +1116,11 @@ const Explorer = {
     // VIEW MANAGEMENT
     // =============================================
     showPanel(panelId) {
+        // Clean up DAG visualizer when switching away from it
+        if (typeof KnexDAG !== 'undefined' && panelId !== 'dagPanel' && KnexDAG.initialized) {
+            KnexDAG.destroy();
+        }
+
         const panels = ['liveFeedPanel', 'dagPanel', 'statsPanel', 'accountPanel', 'blockPanel', 'richListPanel', 'blocksPanel'];
         panels.forEach(id => {
             const el = document.getElementById(id);
@@ -1227,10 +1238,13 @@ const Explorer = {
 
     formatTime(timestamp) {
         if (!timestamp) return '--';
-        const date = new Date(timestamp * 1000);
-        const now = new Date();
-        const diff = Math.floor((now - date) / 1000);
+        // Auto-detect ms vs seconds: if > 10 billion, it's milliseconds
+        const ms = timestamp > 1e10 ? timestamp : timestamp * 1000;
+        const date = new Date(ms);
+        const now = Date.now();
+        const diff = Math.floor((now - ms) / 1000);
 
+        if (diff < 0) return 'just now';  // future timestamps (clock skew)
         if (diff < 5) return 'just now';
         if (diff < 60) return `${diff}s ago`;
         if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
@@ -1241,8 +1255,8 @@ const Explorer = {
 
     formatFullTime(timestamp) {
         if (!timestamp) return '--';
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleString();
+        const ms = timestamp > 1e10 ? timestamp : timestamp * 1000;
+        return new Date(ms).toLocaleString();
     },
 
     formatUptime(seconds) {
