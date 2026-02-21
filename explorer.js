@@ -151,7 +151,6 @@ const Explorer = {
         if (typeof KnexStats !== 'undefined') KnexStats.init();
         if (typeof KnexAccount !== 'undefined') KnexAccount.init();
         if (typeof KnexFlow !== 'undefined') KnexFlow.init();
-        if (typeof KnexVisualizer !== 'undefined') KnexVisualizer.init();
         if (typeof KnexCore !== 'undefined') KnexCore.init();
 
         // Error banner bindings
@@ -212,18 +211,15 @@ const Explorer = {
                     document.getElementById('tabFeed')?.click();
                     break;
                 case '2':
-                    document.getElementById('tabDag')?.click();
-                    break;
-                case '3':
                     document.getElementById('tabStats')?.click();
                     break;
-                case '4':
+                case '3':
                     document.getElementById('tabRichList')?.click();
                     break;
-                case '5':
+                case '4':
                     document.getElementById('tabBlocks')?.click();
                     break;
-                case '6':
+                case '5':
                     document.getElementById('tabCore')?.click();
                     break;
                 case '?':
@@ -1257,12 +1253,7 @@ const Explorer = {
     // VIEW MANAGEMENT
     // =============================================
     showPanel(panelId) {
-        // Clean up DAG visualizer when switching away from it
-        if (typeof KnexVisualizer !== 'undefined' && panelId !== 'dagPanel' && KnexVisualizer.initialized) {
-            KnexVisualizer.destroy();
-        }
-
-        const panels = ['liveFeedPanel', 'dagPanel', 'statsPanel', 'accountPanel', 'blockPanel', 'richListPanel', 'blocksPanel', 'corePanel'];
+        const panels = ['liveFeedPanel', 'statsPanel', 'accountPanel', 'blockPanel', 'richListPanel', 'blocksPanel', 'corePanel'];
         panels.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
@@ -1274,7 +1265,6 @@ const Explorer = {
         const viewMap = {
             liveFeedPanel: 'feed',
             accountPanel: 'account',
-            dagPanel: 'dag',
             statsPanel: 'stats',
             richListPanel: 'richlist',
             blocksPanel: 'blocks',

@@ -4,17 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knexplorer - KnexCoin Block Explorer</title>
-    <meta name="description" content="Knexplorer — Real-time block explorer for KnexCoin. Search accounts, view transactions, explore the DAG.">
+    <meta name="description" content="Knexplorer — Real-time block explorer for KnexCoin. Search accounts and view transactions.">
     <meta name="theme-color" content="#000000">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F50D;</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF8C00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="features.css">
 
-    <!-- Graph visualization -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sigma.js/2.4.0/sigma.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/graphology/0.25.4/graphology.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/graphology-library@0.8.0/dist/graphology-library.min.js"></script>
     <!-- QR codes -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
@@ -88,13 +84,6 @@
                 </svg>
                 Live Feed
             </button>
-            <button class="view-tab" data-view="dag" id="tabDag">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                    <circle cx="5" cy="6" r="2"/><circle cx="12" cy="18" r="2"/>
-                    <circle cx="19" cy="6" r="2"/><path d="M5 8v2a4 4 0 004 4h2m2 0h2a4 4 0 004-4V8"/>
-                </svg>
-                DAG View
-            </button>
             <button class="view-tab" data-view="stats" id="tabStats">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                     <path d="M18 20V10M12 20V4M6 20v-6"/>
@@ -159,138 +148,6 @@
                     <p>Waiting for transactions...</p>
                     <p class="feed-empty-sub">Live blocks will appear here as they're confirmed on the network</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- DAG Visualizer Panel -->
-        <div class="content-panel hidden" id="dagPanel">
-            <div class="panel-header">
-                <h2 class="panel-title">
-                    <span class="pulse-dot"></span>
-                    DAG Visualizer
-                </h2>
-                <div class="panel-actions">
-                    <button class="btn-icon" id="dagPathFinderBtn" title="Path finder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                            <path d="M18 8A6 6 0 006 8c0 7-6 9-6 9h24s-6-2-6-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-                        </svg>
-                    </button>
-                    <button class="btn-icon" id="dagResetBtn" title="Reset view">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 4v6h6M23 20v-6h-6"/>
-                            <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
-                        </svg>
-                    </button>
-                    <button class="btn-icon" id="dagScreenshotBtn" title="Screenshot DAG">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                    </button>
-                    <button class="btn-icon" id="dagRecordBtn" title="Record GIF">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/>
-                        </svg>
-                    </button>
-                    <button class="btn-icon" id="dagFullscreenBtn" title="Fullscreen">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- DAG Toolbar -->
-            <div class="dag-toolbar" id="dagToolbar">
-                <!-- Block type filters -->
-                <div class="dag-filter-section">
-                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="send" checked><span class="legend-dot" style="background:#ff3b3b"></span>Send</label>
-                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="receive" checked><span class="legend-dot" style="background:#00e676"></span>Recv</label>
-                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="open" checked><span class="legend-dot" style="background:#448aff"></span>Open</label>
-                    <label class="dag-filter-toggle"><input type="checkbox" class="dag-type-filter" data-type="change" checked><span class="legend-dot" style="background:#bb86fc"></span>Chg</label>
-                </div>
-                <div class="dag-toolbar-sep"></div>
-                <!-- Edge toggles -->
-                <div class="dag-filter-section">
-                    <label class="dag-filter-toggle"><input type="checkbox" id="dagShowChainEdges" checked>Chain</label>
-                    <label class="dag-filter-toggle"><input type="checkbox" id="dagShowTransferEdges" checked>Transfer</label>
-                </div>
-                <div class="dag-toolbar-sep"></div>
-                <!-- Mode buttons -->
-                <button class="dag-mode-btn active" id="dagValueFlowBtn" title="Value flow edges">Flow</button>
-                <button class="dag-mode-btn" id="dagHeatmapBtn" title="Heatmap by age">Heat</button>
-                <div class="dag-toolbar-sep"></div>
-                <!-- Layout selector -->
-                <select class="dag-select" id="dagLayoutSelect">
-                    <option value="forceatlas2">ForceAtlas2</option>
-                    <option value="circular">Circular</option>
-                    <option value="random">Random</option>
-                </select>
-                <!-- Max nodes -->
-                <div class="dag-slider-group">
-                    <input type="range" id="dagMaxNodes" min="50" max="500" value="200" step="50" class="dag-range">
-                    <span class="dag-slider-label" id="dagMaxNodesLabel">200</span>
-                </div>
-                <div class="dag-toolbar-sep"></div>
-                <!-- Search -->
-                <input type="text" id="dagSearchInput" placeholder="Find..." class="dag-search-input">
-            </div>
-
-            <!-- Time slider -->
-            <div class="dag-time-row">
-                <button class="dag-time-play" id="dagTimePlayBtn" title="Replay">&#9654;</button>
-                <input type="range" id="dagTimeSlider" min="0" max="100" value="100" class="dag-range dag-time-slider-input">
-                <span class="dag-time-label" id="dagTimeLabel">Live</span>
-            </div>
-
-            <!-- DAG Explainer Overlay -->
-            <div class="dag-explainer" id="dagExplainer">
-                <div class="dag-explainer-title">DAG Visualizer</div>
-                <div class="dag-explainer-body">
-                    Each node is a block on the KnexCoin ledger, rendered as a wireframe globe and colored by type:
-                    <strong style="color:#ff3b3b">Send</strong>,
-                    <strong style="color:#00e676">Receive</strong>,
-                    <strong style="color:#448aff">Open</strong>,
-                    <strong style="color:#bb86fc">Change</strong>.
-                    Larger nodes represent larger amounts. Yellow pulses show new connections forming between blocks.
-                </div>
-                <button class="dag-explainer-dismiss" id="dagExplainerDismiss">Got it</button>
-            </div>
-
-            <!-- DAG container with overlays -->
-            <div style="position:relative">
-                <div id="dagContainer"></div>
-                <!-- Stats overlay -->
-                <div class="dag-stats-overlay" id="dagStatsOverlay">
-                    <div><span id="dagTps">0.0</span> TPS</div>
-                    <div><span id="dagBps">0</span> blk/10s</div>
-                    <div><span id="dagActiveAccounts">0</span> accts</div>
-                </div>
-                <!-- Mini-map -->
-                <canvas id="dagMinimap" width="140" height="90"></canvas>
-                <!-- Context menu -->
-                <div class="dag-context-menu hidden" id="dagContextMenu">
-                    <button data-action="viewAccount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>View Account</button>
-                    <button data-action="copyHash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy Hash</button>
-                    <button data-action="highlightChain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Highlight Chain</button>
-                    <button data-action="pinNode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="vertical-align:-1px;margin-right:4px"><path d="M12 17v5M9 11V4a1 1 0 011-1h4a1 1 0 011 1v7"/><path d="M5 17h14l-1.5-6H6.5z"/></svg>Pin Node</button>
-                </div>
-            </div>
-
-            <div class="dag-legend">
-                <span class="dag-legend-item"><span class="legend-dot" style="background:#ff3b3b"></span>Send</span>
-                <span class="dag-legend-item"><span class="legend-dot" style="background:#00e676"></span>Receive</span>
-                <span class="dag-legend-item"><span class="legend-dot" style="background:#448aff"></span>Open</span>
-                <span class="dag-legend-item"><span class="legend-dot" style="background:#bb86fc"></span>Change</span>
-                <span class="dag-legend-item"><span class="legend-dot" style="background:#4dd0e1"></span>BW</span>
-                <span class="dag-legend-item"><span class="legend-dot" style="background:#ffc107"></span>Pending</span>
-                <span class="dag-legend-sep"></span>
-                <span class="dag-legend-item"><span class="legend-line"></span>Chain</span>
-                <span class="dag-legend-item"><span class="legend-line dashed"></span>Transfer</span>
-                <span class="dag-legend-item"><span class="legend-pulse-dot"></span>New Link</span>
-                <span class="dag-legend-sep"></span>
-                <span class="dag-legend-item" style="color:var(--text-muted)">Size = amount</span>
-                <span class="dag-node-count" id="dagNodeCount">0 nodes</span>
             </div>
         </div>
 
@@ -496,11 +353,10 @@
                 <div class="shortcut-row"><kbd>S</kbd><span>Toggle sound</span></div>
                 <div class="shortcut-row"><kbd>P</kbd><span>Pause / resume feed</span></div>
                 <div class="shortcut-row"><kbd>1</kbd><span>Live Feed tab</span></div>
-                <div class="shortcut-row"><kbd>2</kbd><span>DAG View tab</span></div>
-                <div class="shortcut-row"><kbd>3</kbd><span>Network tab</span></div>
-                <div class="shortcut-row"><kbd>4</kbd><span>Rich List tab</span></div>
-                <div class="shortcut-row"><kbd>5</kbd><span>Blocks tab</span></div>
-                <div class="shortcut-row"><kbd>6</kbd><span>Core tab</span></div>
+                <div class="shortcut-row"><kbd>2</kbd><span>Network tab</span></div>
+                <div class="shortcut-row"><kbd>3</kbd><span>Rich List tab</span></div>
+                <div class="shortcut-row"><kbd>4</kbd><span>Blocks tab</span></div>
+                <div class="shortcut-row"><kbd>5</kbd><span>Core tab</span></div>
                 <div class="shortcut-row"><kbd>?</kbd><span>Show this help</span></div>
             </div>
         </div>
@@ -513,6 +369,5 @@
     <script src="audio.js"></script>
     <script src="charts.js"></script>
     <script src="flow.js"></script>
-    <script src="visualizer.js"></script>
 </body>
 </html>

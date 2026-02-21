@@ -74,7 +74,6 @@ const KnexStats = {
     initViewTabs() {
         const tabMap = {
             tabFeed: 'liveFeedPanel',
-            tabDag: 'dagPanel',
             tabStats: 'statsPanel',
             tabRichList: 'richListPanel',
             tabBlocks: 'blocksPanel',
