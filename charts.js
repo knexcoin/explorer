@@ -899,25 +899,9 @@ const KnexCore = {
             const upM = Math.floor((v.uptime_seconds % 3600) / 60);
             const uptimeStr = upH > 0 ? `${upH}h ${upM}m` : `${upM}m`;
 
-            // Identicon
-            let identicon = '';
-            if (typeof KnexIdenticon !== 'undefined' && Explorer.identiconCache) {
-                const cacheKey = `${v.address}:32`;
-                if (Explorer.identiconCache.has(cacheKey)) {
-                    identicon = `<img src="${Explorer.identiconCache.get(cacheKey)}" width="32" height="32" style="border-radius:6px;image-rendering:pixelated">`;
-                } else {
-                    // Generate identicon on the fly
-                    try {
-                        const url = KnexIdenticon.generate(v.address, 32);
-                        Explorer.identiconCache.set(cacheKey, url);
-                        identicon = `<img src="${url}" width="32" height="32" style="border-radius:6px;image-rendering:pixelated">`;
-                    } catch (e) {}
-                }
-            }
-
             return `<div class="core-validator-card">
                 <div class="core-validator-header">
-                    ${identicon}
+                    <span class="core-identicon-slot" data-address="${v.address}"></span>
                     <div>
                         <div class="core-validator-label" style="color:${labelColor}">${label}</div>
                         <div class="core-validator-addr address-link" data-address="${v.address}">${v.address.slice(0, 10)}...${v.address.slice(-6)}</div>
@@ -963,6 +947,16 @@ const KnexCore = {
                 if (addr && typeof Explorer !== 'undefined') Explorer.lookupAccount(addr);
             });
         });
+
+        // Async-fill identicon slots
+        if (typeof Explorer !== 'undefined' && Explorer.createIdenticon) {
+            grid.querySelectorAll('.core-identicon-slot').forEach(async (slot) => {
+                const addr = slot.dataset.address;
+                if (!addr) return;
+                const icon = await Explorer.createIdenticon(addr, 32);
+                if (icon) slot.appendChild(icon);
+            });
+        }
     },
 
     // =============================================
