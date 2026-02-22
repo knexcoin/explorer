@@ -1,5 +1,5 @@
 /**
- * Knexplorer v2.0 - KnexCoin Block Explorer
+ * SuperKnet - KnexCoin Block Explorer
  * Live-listening block explorer with WebSocket feed
  * Improvements: pagination, filtering, rich list, block list,
  * keyboard shortcuts, breadcrumbs, error recovery, toast notifications,
@@ -9,8 +9,8 @@
 const Explorer = {
     // Configuration
     config: {
-        apiUrl: 'https://testnet-api.knexcoins.com',
-        wsUrl: 'wss://testnet-api.knexcoins.com/ws',
+        apiUrl: 'https://api.knexcoins.com',
+        wsUrl: 'wss://api.knexcoins.com/ws',
         decimals: 7,
         symbol: 'KNEX',
         maxFeedItems: 200,
