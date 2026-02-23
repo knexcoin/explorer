@@ -687,12 +687,43 @@ a:hover {
 .feed-memo {
     font-size: 11px;
     color: var(--text-muted);
-    font-style: italic;
     margin-top: 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
+.memo-payload {
+    font-style: italic;
+    color: var(--text-dim, #aaa);
+}
+.memo-type-badge {
+    display: inline-block;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-style: normal;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+.memo-type-badge.memo-text        { background: #1a3a2a; color: #4ade80; }
+.memo-type-badge.memo-json        { background: #1a2a3a; color: #60a5fa; }
+.memo-type-badge.memo-hash_ref    { background: #3a2a1a; color: #f59e0b; }
+.memo-type-badge.memo-nfc_card    { background: #2a1a3a; color: #c084fc; }
+.memo-type-badge.memo-encrypted   { background: #3a1a2a; color: #f472b6; }
+.memo-type-badge.memo-knexmail    { background: #2a1a3a; color: #a78bfa; }
+.memo-type-badge.memo-dex_order   { background: #3a3a1a; color: #fbbf24; }
+.memo-type-badge.memo-dex_settlement { background: #3a2a1a; color: #fb923c; }
+.memo-type-badge.memo-recurring   { background: #1a3a2a; color: #34d399; }
+.memo-type-badge.memo-multisig    { background: #1a2a3a; color: #93c5fd; }
+.memo-type-badge.memo-app         { background: #2a2a2a; color: #9ca3af; }
+.memo-type-badge.memo-extension   { background: #2a2a2a; color: #d4d4d8; }
+.memo-type-badge.memo-legacy      { background: #2a2a2a; color: #737373; }
+.memo-type-badge.memo-unknown     { background: #2a2a2a; color: #525252; }
 
 /* ======= BREADCRUMB ======= */
 .breadcrumb {

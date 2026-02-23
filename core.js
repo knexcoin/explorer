@@ -53,12 +53,12 @@ const KnexCore = {
         '4XE1cufZIHJBWnuBzBPM': { lat: 32.78, lon: -96.81, city: 'Dallas', vnum: 1 },
         // V2 — São Paulo (AWS sa-east-1, 18.228.153.175)
         '4v39kerTmdIvS6VyEZYr': { lat: -23.55, lon: -46.63, city: 'São Paulo', vnum: 2 },
-        // V3 — N. California (AWS us-west-1, 3.101.115.76)
+        // V3 — N. California (AWS us-west-1, 52.8.97.255)
         '0AmKBc0lcZPdBZt89jK4': { lat: 37.77, lon: -121.96, city: 'California', vnum: 3 },
         '47icY5pYDda58SNbJk8p': { lat: 37.77, lon: -121.96, city: 'California', vnum: 3 },
-        // V4 — Mumbai (AWS ap-south-1, 13.127.144.126)
+        // V4 — Mumbai (AWS ap-south-1, 13.205.104.74)
         '8szAtEjPJb69ki0OKcOa': { lat: 19.08, lon: 72.88, city: 'Mumbai', vnum: 4 },
-        // V5 — Sydney (AWS ap-southeast-2, 3.27.85.156)
+        // V5 — Sydney (AWS ap-southeast-2, 15.135.25.63)
         'Iw1Ga3SP3PTrMnG6nSAI': { lat: -33.87, lon: 151.21, city: 'Sydney', vnum: 5 },
         'HD7wyf3bRusGCLDzSljH': { lat: -33.87, lon: 151.21, city: 'Sydney', vnum: 5 },
         // V6 — Hong Kong (LeaseWeb HK, 198.252.103.11)

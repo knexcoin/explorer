@@ -650,7 +650,7 @@ const Explorer = {
                 ${destHtml}
                 ${amount !== '0' ? `<div class="feed-amount ${isPositive ? 'positive' : 'negative'}">${isPositive ? '+' : '-'}${amount} ${this.config.symbol}</div>` : ''}
                 <div class="feed-hash">${shortHash}</div>
-                ${item.memo ? `<div class="feed-memo">${this.escapeHtml(item.memo)}</div>` : ''}
+                ${item.memo ? this.renderMemoBadge(item.memo) : ''}
             </div>
         `;
 
@@ -868,7 +868,7 @@ const Explorer = {
                     ${counterparty ? `<div class="feed-address" data-address="${this.escapeHtml(counterparty)}">${shortAddr}</div>` : ''}
                     ${amount !== '0' ? `<div class="feed-amount ${isPositive ? 'positive' : 'negative'}">${isPositive ? '+' : '-'}${amount} ${this.config.symbol}</div>` : ''}
                     <div class="feed-hash">${shortHash}</div>
-                    ${tx.memo ? `<div class="feed-memo">${this.escapeHtml(tx.memo)}</div>` : ''}
+                    ${tx.memo ? this.renderMemoBadge(tx.memo) : ''}
                 </div>
             `;
 
@@ -985,7 +985,13 @@ const Explorer = {
         }
 
         if (block.memo) {
-            fields.push({ label: 'Memo', value: block.memo });
+            const decoded = this.decodeMemo(block.memo);
+            if (decoded && decoded.typeName !== 'empty') {
+                const label = decoded.typeName.toUpperCase().replace('_', ' ');
+                const badge = `<span class="memo-type-badge memo-${decoded.typeName}">${label}</span>`;
+                const text = decoded.displayText ? ` ${this.escapeHtml(decoded.displayText)}` : '';
+                fields.push({ label: 'Memo', value: badge + text });
+            }
         }
 
         for (const f of fields) {
@@ -1474,6 +1480,53 @@ const Explorer = {
             case 'stake': return 'Stake';
             default: return type || 'Unknown';
         }
+    },
+
+    // ── Memo Decoder & Badge Renderer ──────────────────────────────────
+
+    decodeMemo(hex) {
+        if (!hex) return null;
+        // Must be even-length hex, at least 6 chars (3 bytes header)
+        if (hex.length < 6 || hex.length % 2 !== 0 || !/^[0-9a-f]+$/i.test(hex)) {
+            return { type: 'legacy', typeName: 'legacy', displayText: hex };
+        }
+        const typeCode = parseInt(hex.slice(0, 2), 16);
+        const declaredLen = parseInt(hex.slice(2, 6), 16);
+        const payloadHex = hex.slice(6);
+        const actualLen = payloadHex.length / 2;
+        if (declaredLen !== actualLen) {
+            return { type: 'legacy', typeName: 'legacy', displayText: hex };
+        }
+        const typeNames = {
+            0x00: 'empty', 0x01: 'text', 0x02: 'json', 0x03: 'hash_ref',
+            0x04: 'encrypted', 0x05: 'knexmail', 0x06: 'dex_order',
+            0x07: 'dex_settlement', 0x08: 'nfc_card', 0x09: 'recurring',
+            0x0A: 'multisig', 0xFF: 'extension'
+        };
+        let typeName = typeNames[typeCode];
+        if (!typeName && typeCode >= 0xF0 && typeCode <= 0xFE) typeName = 'app';
+        if (!typeName) typeName = 'unknown';
+
+        let displayText = '';
+        if (typeName === 'text' || typeName === 'json') {
+            try {
+                const bytes = new Uint8Array(payloadHex.match(/.{2}/g).map(b => parseInt(b, 16)));
+                displayText = new TextDecoder().decode(bytes);
+            } catch { displayText = payloadHex; }
+        } else if (typeName === 'empty') {
+            displayText = '';
+        } else {
+            displayText = payloadHex;
+        }
+        return { type: typeCode, typeName, displayText, payloadSize: actualLen };
+    },
+
+    renderMemoBadge(memoHex) {
+        const d = this.decodeMemo(memoHex);
+        if (!d || d.typeName === 'empty') return '';
+        const label = d.typeName.toUpperCase().replace('_', ' ');
+        const text = d.displayText ? `<span class="memo-payload">${this.escapeHtml(d.displayText)}</span>` : '';
+        return `<div class="feed-memo"><span class="memo-type-badge memo-${d.typeName}">${label}</span>${text}</div>`;
     },
 
     escapeHtml(str) {
