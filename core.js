@@ -153,10 +153,12 @@ const KnexCore = {
         await Promise.all([
             this.fetchValidators(),
             this.fetchNetworkStats(),
+            this.fetchConsensusInfo(),
         ]);
         this.renderValidatorCards();
         this.renderTopology();
         this.renderPobBar();
+        this.renderNerdStats();
 
         // Start animation on first load
         if (!this.animFrame) this.startAnimation();
@@ -169,6 +171,7 @@ const KnexCore = {
                 this.renderPobBar();
             });
             this.fetchNetworkStats();
+            this.fetchConsensusInfo().then(() => this.renderNerdStats());
         }, this.config.refreshInterval);
     },
 
@@ -212,6 +215,16 @@ const KnexCore = {
             this.state.networkStats = await resp.json();
         } catch (e) {
             console.warn('[KnexCore] Failed to fetch network stats:', e);
+        }
+    },
+
+    async fetchConsensusInfo() {
+        try {
+            const resp = await fetch(`${this.config.apiUrl}/api/v1/consensus/info`);
+            if (!resp.ok) return;
+            this.state.consensusInfo = await resp.json();
+        } catch (e) {
+            console.warn('[KnexCore] Failed to fetch consensus info:', e);
         }
     },
 
@@ -581,6 +594,92 @@ const KnexCore = {
                 </div>
             `;
         }).join('');
+    },
+
+    // =============================================
+    // CONSENSUS NERD STATS
+    // =============================================
+    renderNerdStats() {
+        const body = document.getElementById('coreNerdBody');
+        if (!body) return;
+        const ci = this.state.consensusInfo;
+        if (!ci) {
+            body.innerHTML = '<div class="feed-empty">Consensus data unavailable</div>';
+            return;
+        }
+
+        const enforcedColor = ci.consensus_enforced ? '#00e676' : '#ffc107';
+        const enforcedLabel = ci.consensus_enforced ? 'Active' : 'Monitor Only';
+
+        // Build tier table rows
+        const tierRows = (ci.tiers || []).map((t, i) => {
+            const elig = ci.tier_eligibility?.[i] || {};
+            const quorumIcon = elig.has_quorum ? '&#x2705;' : '&#x274c;';
+            const tierColor = this.config.tierColors[t.level] || '#bdbdbd';
+            const stakeDisplay = t.required_stake_knex >= 1000
+                ? (t.required_stake_knex / 1000).toLocaleString('en-US') + 'K'
+                : t.required_stake_knex.toLocaleString('en-US');
+            const attackDisplay = t.attack_cost_knex >= 1000
+                ? (t.attack_cost_knex / 1000).toLocaleString('en-US') + 'K'
+                : t.attack_cost_knex.toLocaleString('en-US');
+
+            return `<tr>
+                <td style="color:${tierColor}">T${t.level} ${t.name}</td>
+                <td>${stakeDisplay} KNEX</td>
+                <td>${t.reward_multiplier}x</td>
+                <td>${elig.eligible_validators || 0}</td>
+                <td>${elig.effective_committee_size || 0}</td>
+                <td>${elig.required_attestations || 0} <span style="color:#666">(${t.consensus_threshold_pct}%)</span></td>
+                <td>${attackDisplay} KNEX</td>
+                <td>${quorumIcon}</td>
+            </tr>`;
+        }).join('');
+
+        body.innerHTML = `
+            <div class="core-nerd-grid">
+                <div class="core-nerd-item">
+                    <span class="core-nerd-label">Consensus Model</span>
+                    <span class="core-nerd-value">SPVT</span>
+                </div>
+                <div class="core-nerd-item">
+                    <span class="core-nerd-label">Committee Cap</span>
+                    <span class="core-nerd-value">${ci.committee_cap}</span>
+                </div>
+                <div class="core-nerd-item">
+                    <span class="core-nerd-label">Validation Window</span>
+                    <span class="core-nerd-value">${ci.validation_window_secs}s</span>
+                </div>
+                <div class="core-nerd-item">
+                    <span class="core-nerd-label">Enforcement</span>
+                    <span class="core-nerd-value" style="color:${enforcedColor}">${enforcedLabel}</span>
+                </div>
+                <div class="core-nerd-item">
+                    <span class="core-nerd-label">Total Validators</span>
+                    <span class="core-nerd-value">${ci.total_validators}</span>
+                </div>
+                <div class="core-nerd-item">
+                    <span class="core-nerd-label">Active Validators</span>
+                    <span class="core-nerd-value" style="color:#00e676">${ci.active_validators}</span>
+                </div>
+            </div>
+            <div class="core-nerd-table-wrap">
+                <table class="core-nerd-table">
+                    <thead>
+                        <tr>
+                            <th>Tier</th>
+                            <th>Min Stake</th>
+                            <th>Reward</th>
+                            <th>Eligible</th>
+                            <th>Committee</th>
+                            <th>Attestations</th>
+                            <th>Attack Cost</th>
+                            <th>Quorum</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tierRows}</tbody>
+                </table>
+            </div>
+        `;
     },
 
     // =============================================

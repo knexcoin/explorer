@@ -862,6 +862,99 @@ body, .header, .search-section, .content-panel, .footer,
     background: rgba(255,255,255,0.9);
 }
 
+/* ======= CORE — CONSENSUS NERD STATS ======= */
+.core-nerd-stats {
+    padding: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.core-nerd-header {
+    margin-bottom: 16px;
+}
+
+.core-nerd-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.core-nerd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.core-nerd-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 6px);
+}
+
+.core-nerd-label {
+    font-size: 9px;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.core-nerd-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text, #eee);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.core-nerd-table-wrap {
+    overflow-x: auto;
+}
+
+.core-nerd-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.core-nerd-table th {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border-strong, rgba(255,255,255,0.15));
+    color: var(--text-muted, #888);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.core-nerd-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+    color: var(--text-dim, #bbb);
+    white-space: nowrap;
+}
+
+.core-nerd-table tr:hover td {
+    background: rgba(255,140,0,0.03);
+}
+
+/* Light theme */
+[data-theme="light"] .core-nerd-item {
+    background: #f8f8f8;
+}
+
+[data-theme="light"] .core-nerd-table tr:hover td {
+    background: rgba(255,140,0,0.05);
+}
+
 [data-theme="light"] .core-topology-wrapper {
     background: #fafafa;
 }
