@@ -129,6 +129,7 @@
                         <button class="filter-chip" data-filter="receive" title="Receive only">Recv</button>
                         <button class="filter-chip" data-filter="open" title="Open only">Open</button>
                         <button class="filter-chip" data-filter="change" title="Change only">Chg</button>
+                        <button class="filter-chip" data-filter="stake" title="Stake/Unstake">Stake</button>
                     </div>
                     <button class="btn-icon" id="pauseBtn" title="Pause feed">
                         <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
@@ -268,12 +269,24 @@
                         <span class="account-stat-value" id="accountBlockCount">--</span>
                     </div>
                     <div class="account-stat">
+                        <span class="account-stat-label">Locked</span>
+                        <span class="account-stat-value" id="accountLocked">--</span>
+                    </div>
+                    <div class="account-stat">
+                        <span class="account-stat-label">Available</span>
+                        <span class="account-stat-value" id="accountAvailable">--</span>
+                    </div>
+                    <div class="account-stat">
                         <span class="account-stat-label">Representative</span>
                         <span class="account-stat-value account-stat-addr" id="accountRep">--</span>
                     </div>
                 </div>
                 <div class="account-enrichment" id="accountEnrichment">
                     <!-- Populated by charts.js: sparkline, QR, labels, lifetime stats -->
+                </div>
+                <div class="account-staking-section hidden" id="accountStaking">
+                    <h3 class="panel-subtitle">Staking</h3>
+                    <div class="staking-entries" id="stakingEntries"></div>
                 </div>
             </div>
             <div class="panel-header">
@@ -283,6 +296,7 @@
                         <button class="filter-chip active" data-filter="all">All</button>
                         <button class="filter-chip" data-filter="send">Send</button>
                         <button class="filter-chip" data-filter="receive">Recv</button>
+                        <button class="filter-chip" data-filter="stake">Stake</button>
                     </div>
                 </div>
             </div>

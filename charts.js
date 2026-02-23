@@ -48,7 +48,7 @@ const KnexStats = {
     largestTx: { amount: 0n, hash: '', type: '' },
 
     // Block type counts
-    typeCounts: { send: 0, receive: 0, open: 0, change: 0, bandwidth: 0, pending: 0 },
+    typeCounts: { send: 0, receive: 0, open: 0, change: 0, bandwidth: 0, pending: 0, stake: 0, unstake: 0 },
 
     // Top accounts
     accountActivity: new Map(), // account → { sends, receives, volume }
@@ -66,6 +66,8 @@ const KnexStats = {
         Explorer.on('block', (data) => this.onBlock(data));
         Explorer.on('ws:status', (status) => this.updateHealth(status));
         this.statsInterval = setInterval(() => this.updateMetrics(), 2000);
+        // Refresh staking/validator stats every 30 seconds
+        setInterval(() => this.fetchNetworkStats(), 30000);
     },
 
     // =============================================
@@ -200,7 +202,35 @@ const KnexStats = {
                     <div class="stat-card-sub">Waiting for activity...</div>
                 </div>
             </div>
+
+            <!-- Row 5: Staking & Validator Stats -->
+            <div class="stat-card">
+                <div class="stat-card-label">Total Staked</div>
+                <div class="stat-card-value" id="statTotalStaked">--</div>
+                <div class="stat-card-sub" id="statStakingRatio">--% of supply</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-label">Active Validators</div>
+                <div class="stat-card-value" id="statActiveValidators" style="color:#e040fb">--</div>
+                <div class="stat-card-sub" id="statTotalValidators">-- total registered</div>
+            </div>
+
+            <div class="stat-card stat-card-wide">
+                <div class="stat-card-label">Validators by Tier</div>
+                <div class="tier-breakdown" id="tierBreakdown"></div>
+                <div class="tier-breakdown-legend" id="tierBreakdownLegend"></div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-label">Network Security</div>
+                <div class="stat-card-value" id="statSecurityScore">--</div>
+                <div class="stat-card-sub" id="statSecuritySub">Consensus status</div>
+            </div>
         `;
+
+        // Fetch staking stats immediately
+        this.fetchNetworkStats();
     },
 
     // =============================================
@@ -260,6 +290,106 @@ const KnexStats = {
 
         // Network pulse animation
         this.triggerPulse();
+    },
+
+    // =============================================
+    // NETWORK STATS — Staking & Validators
+    // =============================================
+    async fetchNetworkStats() {
+        try {
+            const res = await fetch(`${Explorer.config.apiUrl}/api/v1/network/stats`);
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // Total Staked
+            const stakedEl = document.getElementById('statTotalStaked');
+            if (stakedEl) {
+                stakedEl.textContent = (data.total_staked_knex || 0).toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' KNEX';
+            }
+
+            // Staking ratio (% of 100M supply)
+            const ratioEl = document.getElementById('statStakingRatio');
+            if (ratioEl) {
+                const ratio = ((data.total_staked_knex || 0) / 100000000 * 100).toFixed(4);
+                ratioEl.textContent = ratio + '% of supply';
+            }
+
+            // Active validators
+            const activeEl = document.getElementById('statActiveValidators');
+            if (activeEl) activeEl.textContent = data.active_validators || 0;
+
+            const totalEl = document.getElementById('statTotalValidators');
+            if (totalEl) totalEl.textContent = (data.total_validators || 0) + ' total registered';
+
+            // Tier breakdown
+            if (data.validators_by_tier) {
+                this.renderTierBreakdown(data.validators_by_tier);
+            }
+
+            // Security score — based on consensus quorum
+            this.updateSecurityScore();
+        } catch (e) {
+            // Silently fail
+        }
+    },
+
+    renderTierBreakdown(tiers) {
+        const bar = document.getElementById('tierBreakdown');
+        const legend = document.getElementById('tierBreakdownLegend');
+        if (!bar || !legend) return;
+
+        const tierColors = KnexCore?.config?.tierColors || { 1: '#ff6b00', 2: '#ffc107', 3: '#00e676', 4: '#29b6f6', 5: '#bdbdbd' };
+        const total = tiers.reduce((sum, t) => sum + t.count, 0);
+
+        if (total === 0) {
+            bar.innerHTML = '<div style="color:#555;font-size:11px;padding:8px 0">No active validators</div>';
+            legend.innerHTML = '';
+            return;
+        }
+
+        bar.innerHTML = '<div class="tier-bar">' + tiers.map(t => {
+            const pct = Math.max((t.count / total * 100), t.count > 0 ? 8 : 0);
+            const color = tierColors[t.tier] || '#bdbdbd';
+            return `<div class="tier-bar-segment" style="width:${pct}%;background:${color}" title="T${t.tier} ${t.name}: ${t.count} validators"></div>`;
+        }).join('') + '</div>';
+
+        legend.innerHTML = tiers.filter(t => t.count > 0).map(t => {
+            const color = tierColors[t.tier] || '#bdbdbd';
+            const stakedDisplay = t.total_staked_knex >= 1000
+                ? (t.total_staked_knex / 1000).toFixed(0) + 'K'
+                : (t.total_staked_knex || 0).toFixed(0);
+            return `<span class="tier-legend-item"><span class="tier-legend-dot" style="background:${color}"></span>T${t.tier} ${t.name} (${t.count}) — ${stakedDisplay} KNEX</span>`;
+        }).join('');
+    },
+
+    async updateSecurityScore() {
+        try {
+            const res = await fetch(`${Explorer.config.apiUrl}/api/v1/consensus/info`);
+            if (!res.ok) return;
+            const ci = await res.json();
+
+            const scoreEl = document.getElementById('statSecurityScore');
+            const subEl = document.getElementById('statSecuritySub');
+            if (!scoreEl) return;
+
+            const tiers = ci.tier_eligibility || [];
+            const quorumCount = tiers.filter(t => t.has_quorum).length;
+            const totalTiers = tiers.length;
+
+            if (quorumCount === totalTiers) {
+                scoreEl.textContent = 'Full Quorum';
+                scoreEl.style.color = '#00e676';
+                if (subEl) subEl.textContent = `All ${totalTiers} tiers have quorum`;
+            } else if (quorumCount > 0) {
+                scoreEl.textContent = `${quorumCount}/${totalTiers} Tiers`;
+                scoreEl.style.color = '#ffc107';
+                if (subEl) subEl.textContent = `${totalTiers - quorumCount} tier(s) need validators`;
+            } else {
+                scoreEl.textContent = 'No Quorum';
+                scoreEl.style.color = '#ff3d3d';
+                if (subEl) subEl.textContent = 'Insufficient validators';
+            }
+        } catch (e) { /* ignore */ }
     },
 
     // =============================================
@@ -462,6 +592,7 @@ const KnexStats = {
         const colors = {
             send: '#ff3b3b', receive: '#00e676', open: '#448aff',
             change: '#bb86fc', bandwidth: '#4dd0e1', pending: '#ffc107',
+            stake: '#e040fb', unstake: '#ff9800',
         };
 
         let startAngle = -Math.PI / 2;

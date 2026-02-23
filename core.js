@@ -625,7 +625,55 @@ const KnexCore = {
                 ? (t.attack_cost_knex / 1000).toLocaleString('en-US') + 'K'
                 : t.attack_cost_knex.toLocaleString('en-US');
 
-            return `<tr>
+            // Build comprehensive JSON for expandable detail
+            const tierJson = {
+                tier: {
+                    level: t.level,
+                    name: t.name,
+                    min_stake_knex: t.required_stake_knex,
+                    min_stake_raw: String(t.required_stake_knex * 10000000),
+                },
+                consensus: {
+                    threshold_pct: t.consensus_threshold_pct,
+                    required_attestations: elig.required_attestations || 0,
+                    effective_committee: elig.effective_committee_size || 0,
+                    committee_cap: ci.committee_cap,
+                },
+                eligibility: {
+                    eligible_validators: elig.eligible_validators || 0,
+                    has_quorum: elig.has_quorum || false,
+                },
+                operations: {
+                    send: {
+                        max_amount: stakeDisplay + ' KNEX',
+                        validators_required: elig.required_attestations || 0,
+                        validation_window_secs: ci.validation_window_secs,
+                    },
+                    receive: { auto_confirmed: true, validators_required: 0 },
+                    stake: {
+                        min_amount: stakeDisplay + ' KNEX',
+                        unbonding_period: '21 days (1,814,400s)',
+                        reward_multiplier: t.reward_multiplier + 'x',
+                    },
+                    unstake: {
+                        cooldown: '21 days (1,814,400s)',
+                        funds_locked_during_unbonding: true,
+                    },
+                    change: { validators_required: 0, local_only: true },
+                },
+                security: {
+                    attack_cost_knex: t.attack_cost_knex,
+                    byzantine_fault_tolerance: '33%',
+                },
+                reward: {
+                    multiplier: t.reward_multiplier,
+                },
+            };
+
+            const jsonStr = JSON.stringify(tierJson, null, 2)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            return `<tr class="nerd-tier-row" data-tier-index="${i}" style="cursor:pointer" title="Click to expand">
                 <td style="color:${tierColor}">T${t.level} ${t.name}</td>
                 <td>${stakeDisplay} KNEX</td>
                 <td>${t.reward_multiplier}x</td>
@@ -634,6 +682,9 @@ const KnexCore = {
                 <td>${elig.required_attestations || 0} <span style="color:#666">(${t.consensus_threshold_pct}%)</span></td>
                 <td>${attackDisplay} KNEX</td>
                 <td>${quorumIcon}</td>
+            </tr>
+            <tr class="nerd-tier-detail hidden" id="nerdTierDetail-${i}">
+                <td colspan="8"><pre class="nerd-json">${jsonStr}</pre></td>
             </tr>`;
         }).join('');
 
@@ -682,6 +733,21 @@ const KnexCore = {
                 </table>
             </div>
         `;
+
+        // Expandable tier rows — toggle JSON detail on click
+        const table = body.querySelector('.core-nerd-table');
+        if (table) {
+            table.addEventListener('click', (e) => {
+                const row = e.target.closest('.nerd-tier-row');
+                if (!row) return;
+                const idx = row.dataset.tierIndex;
+                const detail = document.getElementById(`nerdTierDetail-${idx}`);
+                if (detail) {
+                    detail.classList.toggle('hidden');
+                    row.classList.toggle('expanded');
+                }
+            });
+        }
     },
 
     // =============================================

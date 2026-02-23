@@ -576,6 +576,25 @@ const Explorer = {
                 destination: msg.data.destination || msg.data.link || '',
                 source: msg.data.source || '',
             };
+
+            // Pending → Confirmed: remove matching pending item when receive confirmed
+            if (feedItem.type === 'receive') {
+                const container = document.getElementById('feedContainer');
+                if (container) {
+                    const pendingEl = container.querySelector('.feed-item--pending');
+                    if (pendingEl) {
+                        // Remove first pending item matching this account
+                        const pendingItems = container.querySelectorAll('.feed-item--pending');
+                        for (const pe of pendingItems) {
+                            pe.classList.remove('feed-item--pending');
+                            pe.classList.add('feed-item--confirmed');
+                            setTimeout(() => pe.remove(), 600);
+                            break;
+                        }
+                    }
+                }
+            }
+
             this.addFeedItem(feedItem);
             this.emit('block', msg.data);
         } else if (msg.type === 'PendingReceived' && msg.data) {
@@ -614,10 +633,55 @@ const Explorer = {
         if (empty) empty.remove();
     },
 
+    /** Build address class: magenta bold for validators, orange for regular */
+    addrClass(addr) {
+        return this.isValidatorAddress(addr) ? 'feed-address validator-address' : 'feed-address';
+    },
+
+    /** Build from→to address HTML for a feed item */
+    buildAddressesHtml(fromAddr, toAddr) {
+        let html = '<div class="feed-addresses">';
+        if (fromAddr && this.isValidAddress(fromAddr)) {
+            html += `<span class="${this.addrClass(fromAddr)}" data-address="${this.escapeHtml(fromAddr)}">${this.truncateAddress(fromAddr)}</span>`;
+        }
+        if (fromAddr && toAddr && this.isValidAddress(fromAddr) && this.isValidAddress(toAddr)) {
+            html += '<span class="feed-arrow">→</span>';
+        }
+        if (toAddr && this.isValidAddress(toAddr)) {
+            html += `<span class="${this.addrClass(toAddr)}" data-address="${this.escapeHtml(toAddr)}">${this.truncateAddress(toAddr)}</span>`;
+        }
+        html += '</div>';
+        return html;
+    },
+
+    /** Derive from/to addresses for a feed item */
+    deriveFeedAddresses(item) {
+        const effType = this.effectiveType(item);
+        switch (effType) {
+            case 'send':
+                return { from: item.account, to: item.destination || '' };
+            case 'receive':
+                return { from: item.source || '', to: item.account };
+            case 'open':
+                return { from: '', to: item.account };
+            case 'stake':
+                return { from: item.account, to: item.destination || '' };
+            case 'unstake':
+                return { from: item.destination || '', to: item.account };
+            case 'pending':
+                return { from: item.source || '', to: item.account };
+            case 'change':
+                return { from: item.account, to: '' };
+            default:
+                return { from: item.account, to: item.destination || '' };
+        }
+    },
+
     renderFeedItem(item, prepend = false) {
         const container = document.getElementById('feedContainer');
         const el = document.createElement('div');
         el.className = 'feed-item';
+        if (item.type === 'pending') el.classList.add('feed-item--pending');
         el.dataset.hash = item.hash;
         el.dataset.type = item.type;
 
@@ -626,18 +690,12 @@ const Explorer = {
         const typeLabel = this.getTypeLabel(effType);
         const timeStr = this.formatTime(item.timestamp);
         const shortHash = this.truncateHash(item.hash);
-        const shortAddr = this.truncateAddress(item.account);
         const amount = this.formatAmount(item.amount);
-        const isPositive = item.type === 'receive' || item.type === 'open' || item.type === 'pending';
+        const isPositive = item.type === 'receive' || item.type === 'open' || item.type === 'pending' || item.type === 'unstake';
 
-        // Show destination for sends
-        let destHtml = '';
-        if (item.type === 'send' && item.destination) {
-            const dest = this.isValidAddress(item.destination)
-                ? this.truncateAddress(item.destination)
-                : this.truncateHash(item.destination);
-            destHtml = `<div class="feed-dest">→ <span class="feed-address" data-address="${this.escapeHtml(item.destination)}">${dest}</span></div>`;
-        }
+        // Build dual-address display
+        const { from, to } = this.deriveFeedAddresses(item);
+        const addressesHtml = this.buildAddressesHtml(from, to);
 
         el.innerHTML = `
             <div class="feed-type-badge ${typeClass}">${typeLabel.slice(0, 3).toUpperCase()}</div>
@@ -646,8 +704,7 @@ const Explorer = {
                     <span class="feed-type-label" style="color: inherit">${typeLabel}</span>
                     <span class="feed-time" title="${this.formatFullTime(item.timestamp)}">${timeStr}</span>
                 </div>
-                <div class="feed-address" data-address="${this.escapeHtml(item.account)}">${shortAddr}</div>
-                ${destHtml}
+                ${addressesHtml}
                 ${amount !== '0' ? `<div class="feed-amount ${isPositive ? 'positive' : 'negative'}">${isPositive ? '+' : '-'}${amount} ${this.config.symbol}</div>` : ''}
                 <div class="feed-hash">${shortHash}</div>
                 ${item.memo ? this.renderMemoBadge(item.memo) : ''}
@@ -680,11 +737,16 @@ const Explorer = {
     applyFeedFilter() {
         const container = document.getElementById('feedContainer');
         const items = container.querySelectorAll('.feed-item');
+        const filter = this.state.feedFilter;
         items.forEach(item => {
-            if (this.state.feedFilter === 'all' || item.dataset.type === this.state.feedFilter) {
+            const type = item.dataset.type;
+            if (filter === 'all') {
                 item.style.display = '';
+            } else if (filter === 'stake') {
+                // Stake filter matches both stake and unstake
+                item.style.display = (type === 'stake' || type === 'unstake') ? '' : 'none';
             } else {
-                item.style.display = 'none';
+                item.style.display = (type === filter) ? '' : 'none';
             }
         });
     },
@@ -757,13 +819,19 @@ const Explorer = {
         document.getElementById('accountPending').textContent = '...';
         document.getElementById('accountBlockCount').textContent = '...';
         document.getElementById('accountRep').textContent = '...';
+        const lockedEl = document.getElementById('accountLocked');
+        const availEl = document.getElementById('accountAvailable');
+        if (lockedEl) lockedEl.textContent = '...';
+        if (availEl) availEl.textContent = '...';
+        document.getElementById('accountStaking')?.classList.add('hidden');
         document.getElementById('historyContainer').innerHTML = '<div class="feed-empty"><span class="spinner-inline"></span> Loading history...</div>';
         document.getElementById('historyPagination')?.classList.add('hidden');
 
         try {
-            const [infoRes, historyRes] = await Promise.all([
+            const [infoRes, historyRes, stakesRes] = await Promise.all([
                 fetch(`${this.config.apiUrl}/api/v1/account/${address}`),
                 fetch(`${this.config.apiUrl}/account/${address}/history`),
+                fetch(`${this.config.apiUrl}/api/v1/account/${address}/stakes`).catch(() => null),
             ]);
 
             let info = null;
@@ -775,6 +843,19 @@ const Explorer = {
                     this.formatAmount(info.pending || '0') + ' ' + this.config.symbol;
                 document.getElementById('accountBlockCount').textContent =
                     (info.block_count || 0).toLocaleString();
+
+                // Locked & Available balances
+                const lockedEl = document.getElementById('accountLocked');
+                const availEl = document.getElementById('accountAvailable');
+                if (lockedEl) {
+                    const locked = info.locked_balance || '0';
+                    lockedEl.textContent = this.formatAmount(locked) + ' ' + this.config.symbol;
+                    // Dim if zero
+                    lockedEl.style.color = locked === '0' ? 'var(--text-dim)' : '#ffc107';
+                }
+                if (availEl) {
+                    availEl.textContent = this.formatAmount(info.available_balance || info.balance || '0') + ' ' + this.config.symbol;
+                }
 
                 const rep = info.representative || 'None';
                 const repEl = document.getElementById('accountRep');
@@ -794,7 +875,18 @@ const Explorer = {
                 document.getElementById('accountPending').textContent = '0 ' + this.config.symbol;
                 document.getElementById('accountBlockCount').textContent = '0';
                 document.getElementById('accountRep').textContent = err.error || 'Account not found';
+                const lockedEl = document.getElementById('accountLocked');
+                const availEl = document.getElementById('accountAvailable');
+                if (lockedEl) lockedEl.textContent = '0 ' + this.config.symbol;
+                if (availEl) availEl.textContent = '0 ' + this.config.symbol;
             }
+
+            // Staking section
+            let stakes = [];
+            if (stakesRes && stakesRes.ok) {
+                stakes = await stakesRes.json();
+            }
+            this.renderStakingEntries(stakes);
 
             let history = [];
             if (historyRes.ok) {
@@ -807,7 +899,7 @@ const Explorer = {
                     '<div class="feed-empty"><p>No transaction history</p></div>';
             }
 
-            this.emit('account:loaded', { info, history, address });
+            this.emit('account:loaded', { info, history, stakes, address });
         } catch (error) {
             console.error('[Account] Lookup failed:', error);
             this.state.lastError = error.message;
@@ -823,6 +915,9 @@ const Explorer = {
     // =============================================
     getFilteredHistory() {
         if (this.state.historyFilter === 'all') return this.state.historyData;
+        if (this.state.historyFilter === 'stake') {
+            return this.state.historyData.filter(tx => tx.type === 'stake' || tx.type === 'unstake');
+        }
         return this.state.historyData.filter(tx => tx.type === this.state.historyFilter);
     },
 
@@ -854,9 +949,22 @@ const Explorer = {
             const timeStr = this.formatTime(tx.timestamp);
             const shortHash = this.truncateHash(tx.hash);
             const counterparty = tx.account || '';
-            const shortAddr = counterparty ? this.truncateAddress(counterparty) : '--';
+            const viewedAccount = this.state.currentAccount || '';
             const amount = this.formatAmount(tx.amount || tx.balance || '0');
-            const isPositive = tx.type === 'receive' || tx.type === 'open';
+            const isPositive = tx.type === 'receive' || tx.type === 'open' || tx.type === 'unstake';
+
+            // Derive from/to based on tx type and viewed account
+            let from = '', to = '';
+            switch (tx.type) {
+                case 'send':    from = viewedAccount; to = counterparty; break;
+                case 'receive': from = counterparty;  to = viewedAccount; break;
+                case 'open':    from = counterparty || ''; to = viewedAccount; break;
+                case 'stake':   from = viewedAccount; to = counterparty; break;
+                case 'unstake': from = counterparty;  to = viewedAccount; break;
+                case 'change':  from = viewedAccount; to = ''; break;
+                default:        from = viewedAccount; to = counterparty; break;
+            }
+            const addressesHtml = this.buildAddressesHtml(from, to);
 
             el.innerHTML = `
                 <div class="feed-type-badge ${typeClass}">${typeLabel.slice(0, 3).toUpperCase()}</div>
@@ -865,7 +973,7 @@ const Explorer = {
                         <span class="feed-type-label">${typeLabel}</span>
                         <span class="feed-time" title="${this.formatFullTime(tx.timestamp)}">${timeStr}</span>
                     </div>
-                    ${counterparty ? `<div class="feed-address" data-address="${this.escapeHtml(counterparty)}">${shortAddr}</div>` : ''}
+                    ${addressesHtml}
                     ${amount !== '0' ? `<div class="feed-amount ${isPositive ? 'positive' : 'negative'}">${isPositive ? '+' : '-'}${amount} ${this.config.symbol}</div>` : ''}
                     <div class="feed-hash">${shortHash}</div>
                     ${tx.memo ? this.renderMemoBadge(tx.memo) : ''}
@@ -896,6 +1004,71 @@ const Explorer = {
             document.getElementById('historyNext').disabled = this.state.historyPage >= totalPages - 1;
         } else if (paginationEl) {
             paginationEl.classList.add('hidden');
+        }
+    },
+
+    // =============================================
+    // STAKING ENTRIES (Account Panel)
+    // =============================================
+    renderStakingEntries(stakes) {
+        const section = document.getElementById('accountStaking');
+        const container = document.getElementById('stakingEntries');
+        if (!section || !container) return;
+
+        if (!stakes || stakes.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        section.classList.remove('hidden');
+        container.innerHTML = '';
+
+        for (const s of stakes) {
+            const entry = document.createElement('div');
+            entry.className = 'staking-entry';
+
+            const validatorShort = this.truncateAddress(s.validator);
+            const amount = this.formatAmount(s.amount || '0');
+
+            let statusHtml = '';
+            if (s.unbonding) {
+                const now = Date.now();
+                const readyAt = (s.unbond_ready_at || 0) * 1000; // API returns seconds
+                const remaining = readyAt - now;
+                let countdown = '';
+                if (remaining <= 0) {
+                    countdown = 'Ready to claim';
+                } else {
+                    const days = Math.floor(remaining / 86400000);
+                    const hours = Math.floor((remaining % 86400000) / 3600000);
+                    countdown = `Unlocks in ${days}d ${hours}h`;
+                }
+                statusHtml = `
+                    <span class="staking-badge unbonding">Unbonding</span>
+                    <span class="staking-countdown">${countdown}</span>
+                `;
+            } else {
+                statusHtml = '<span class="staking-badge active">Staked</span>';
+            }
+
+            entry.innerHTML = `
+                <div class="staking-validator">
+                    <span class="feed-address validator-address" data-address="${this.escapeHtml(s.validator)}">${validatorShort}</span>
+                </div>
+                <div class="staking-amount">${amount} ${this.config.symbol}</div>
+                <div class="staking-status">${statusHtml}</div>
+            `;
+
+            this.attachIdenticons(entry);
+
+            entry.querySelector('.feed-address')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (s.validator && this.isValidAddress(s.validator)) {
+                    this.lookupAccount(s.validator);
+                }
+            });
+
+            container.appendChild(entry);
         }
     },
 
@@ -946,24 +1119,27 @@ const Explorer = {
             flowContainer.innerHTML = '';
         }
 
+        const acctClass = this.isValidatorAddress(block.account) ? 'address-link validator-address' : 'address-link';
         const fields = [
             { label: 'Type', value: `<span class="type-tag ${this.getTypeClass(block.block_type)}">${block.block_type}</span>` },
             { label: 'Hash', value: block.hash, class: 'hash-value', copyable: true },
-            { label: 'Account', value: block.account, class: 'address-link', action: () => this.lookupAccount(block.account), copyable: true },
+            { label: 'Account', value: block.account, class: acctClass, action: () => this.lookupAccount(block.account), copyable: true },
             { label: 'Balance', value: this.formatAmount(block.balance || '0') + ' ' + this.config.symbol },
         ];
 
-        // FIX: Destination field — resolve address properly
-        if (block.block_type === 'send') {
-            if (block.destination && this.isValidAddress(block.destination)) {
-                // If block has a proper destination address field
-                fields.push({ label: 'Destination', value: block.destination, class: 'address-link', action: () => this.lookupAccount(block.destination), copyable: true });
+        // Destination/Link field — resolve address properly
+        if (block.block_type === 'send' || block.block_type === 'stake' || block.block_type === 'unstake') {
+            const dest = block.destination || block.link || '';
+            const label = block.block_type === 'send' ? 'Destination' : 'Validator';
+            if (dest && this.isValidAddress(dest)) {
+                const destClass = this.isValidatorAddress(dest) ? 'address-link validator-address' : 'address-link';
+                fields.push({ label, value: dest, class: destClass, action: () => this.lookupAccount(dest), copyable: true });
             } else if (block.link) {
-                // link might be hex or address
                 if (this.isValidAddress(block.link)) {
-                    fields.push({ label: 'Destination', value: block.link, class: 'address-link', action: () => this.lookupAccount(block.link), copyable: true });
+                    const linkClass = this.isValidatorAddress(block.link) ? 'address-link validator-address' : 'address-link';
+                    fields.push({ label, value: block.link, class: linkClass, action: () => this.lookupAccount(block.link), copyable: true });
                 } else {
-                    fields.push({ label: 'Destination (hex)', value: block.link, class: 'hash-value', copyable: true });
+                    fields.push({ label: label + ' (hex)', value: block.link, class: 'hash-value', copyable: true });
                 }
             }
         } else if (block.block_type === 'receive' || block.block_type === 'open') {
@@ -1201,6 +1377,9 @@ const Explorer = {
             const amount = this.formatAmount(block.amount || block.balance || '0');
             const timeStr = this.formatTime(block.timestamp);
 
+            const dest = block.destination || block.link || '';
+            const addrHtml = this.buildAddressesHtml(account, this.isValidAddress(dest) ? dest : '');
+
             el.innerHTML = `
                 <div class="feed-type-badge ${typeClass}">${typeLabel.slice(0, 3).toUpperCase()}</div>
                 <div class="feed-body">
@@ -1208,7 +1387,7 @@ const Explorer = {
                         <span class="feed-type-label">${typeLabel}</span>
                         <span class="feed-time">${timeStr}</span>
                     </div>
-                    <div class="feed-address" data-address="${this.escapeHtml(account)}">${this.truncateAddress(account)}</div>
+                    ${addrHtml}
                     ${amount !== '0' ? `<div class="feed-amount">${amount} ${this.config.symbol}</div>` : ''}
                     <div class="feed-hash">${this.truncateHash(hash)}</div>
                 </div>
@@ -1450,6 +1629,8 @@ const Explorer = {
 
     /** Determine effective type — detects staking (send to validator) */
     effectiveType(item) {
+        // API already sends 'stake'/'unstake' block_type for native stake/unstake blocks
+        if (item.type === 'stake' || item.type === 'unstake') return item.type;
         if (item.type === 'send' && item.destination && this.isValidatorAddress(item.destination)) {
             return 'stake';
         }
@@ -1465,6 +1646,7 @@ const Explorer = {
             case 'bandwidth': return 'bandwidth';
             case 'pending': return 'receive';
             case 'stake': return 'stake';
+            case 'unstake': return 'unstake';
             default: return 'send';
         }
     },
@@ -1478,6 +1660,7 @@ const Explorer = {
             case 'bandwidth': return 'Bandwidth';
             case 'pending': return 'Pending';
             case 'stake': return 'Stake';
+            case 'unstake': return 'Unstake';
             default: return type || 'Unknown';
         }
     },
