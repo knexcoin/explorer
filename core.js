@@ -50,18 +50,18 @@ const KnexCore = {
     geoRegistry: {
         // V2 — São Paulo (AWS sa-east-1)
         '4v39kerTmdIvS6VyEZYr': { lat: -23.55, lon: -46.63, city: 'São Paulo' },
-        // V1 old key — Buffalo, NY (HawkHost)
-        'DuKnng38xov6UthcBck5': { lat: 42.88, lon: -78.88, city: 'Buffalo' },
+        // V1 old key — Dallas, TX (HawkHost)
+        'DuKnng38xov6UthcBck5': { lat: 32.78, lon: -96.81, city: 'Dallas' },
         // V3 — N. California (AWS us-west-1)
         '0AmKBc0lcZPdBZt89jK4': { lat: 37.77, lon: -121.96, city: 'California' },
         // V5 — Sydney (AWS ap-southeast-2)
         'Iw1Ga3SP3PTrMnG6nSAI': { lat: -33.87, lon: 151.21, city: 'Sydney' },
         // V4 — Mumbai (AWS ap-south-1)
         '8szAtEjPJb69ki0OKcOa': { lat: 19.08, lon: 72.88, city: 'Mumbai' },
-        // V1 reward / micro — Buffalo area
-        'G3e0SdNWBYLO5wPAlu1j': { lat: 43.10, lon: -78.50, city: 'Buffalo' },
-        // V1 new operative key
-        '4XE1cufZIHJBWnuBzBPM': { lat: 42.88, lon: -78.88, city: 'Buffalo' },
+        // V1 reward / micro — Dallas area
+        'G3e0SdNWBYLO5wPAlu1j': { lat: 32.78, lon: -96.81, city: 'Dallas' },
+        // V1 new operative key — Dallas, TX
+        '4XE1cufZIHJBWnuBzBPM': { lat: 32.78, lon: -96.81, city: 'Dallas' },
         // V3 operative key
         '47icY5pYDda58SNbJk8p': { lat: 37.77, lon: -121.96, city: 'California' },
         // V5 operative key
