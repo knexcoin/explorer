@@ -113,16 +113,9 @@ a:hover {
 }
 
 .logo-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, var(--orange), var(--gold));
-    color: #000;
-    font-weight: 700;
-    font-size: 16px;
-    border-radius: 6px;
+    border-radius: 4px;
     transition: transform var(--transition-smooth);
 }
 .logo:hover .logo-icon {
@@ -614,6 +607,12 @@ a:hover {
     color: var(--cyan);
 }
 
+.feed-type-badge.stake {
+    background: rgba(255,193,7,0.1);
+    border: 1px solid rgba(255,193,7,0.35);
+    color: #ffc107;
+}
+
 .feed-body {
     flex: 1;
     min-width: 0;
@@ -902,6 +901,7 @@ a:hover {
 .type-tag.change { background: rgba(187,134,252,0.15); color: var(--purple); }
 .type-tag.open { background: rgba(68,138,255,0.15); color: var(--blue); }
 .type-tag.bandwidth { background: rgba(77,208,225,0.15); color: var(--cyan); }
+.type-tag.stake { background: rgba(255,193,7,0.15); color: #ffc107; }
 
 /* ======= BLOCK NAVIGATION ======= */
 .block-nav {

@@ -43,6 +43,9 @@ const Explorer = {
         // Error state
         lastError: null,
         lastErrorAction: null,
+        // Validator address cache (set of validator staking addresses)
+        validatorAddresses: new Set(),
+        validatorData: [],
     },
 
     // =============================================
@@ -139,6 +142,7 @@ const Explorer = {
         this.bindKeyboardShortcuts();
         this.connectWebSocket();
         this.fetchNodeStats();
+        this.fetchValidatorAddresses();
         this.state.statsTimer = setInterval(() => this.fetchNodeStats(), this.config.statsInterval);
 
         // Handle URL hash for deep linking
@@ -617,8 +621,9 @@ const Explorer = {
         el.dataset.hash = item.hash;
         el.dataset.type = item.type;
 
-        const typeClass = this.getTypeClass(item.type);
-        const typeLabel = this.getTypeLabel(item.type);
+        const effType = this.effectiveType(item);
+        const typeClass = this.getTypeClass(effType);
+        const typeLabel = this.getTypeLabel(effType);
         const timeStr = this.formatTime(item.timestamp);
         const shortHash = this.truncateHash(item.hash);
         const shortAddr = this.truncateAddress(item.account);
@@ -1414,6 +1419,37 @@ const Explorer = {
         return addr.slice(0, 8) + '...' + addr.slice(-6);
     },
 
+    // =============================================
+    // VALIDATOR ADDRESS CACHE
+    // =============================================
+    async fetchValidatorAddresses() {
+        try {
+            const resp = await fetch(`${this.config.apiUrl}/api/v1/validators`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+            this.state.validatorAddresses = new Set();
+            this.state.validatorData = data.validators || [];
+            for (const v of this.state.validatorData) {
+                if (v.address) this.state.validatorAddresses.add(v.address);
+            }
+        } catch (e) {
+            console.warn('[Explorer] Failed to fetch validator addresses:', e);
+        }
+    },
+
+    /** Check if address is a validator staking address */
+    isValidatorAddress(address) {
+        return this.state.validatorAddresses.has(address);
+    },
+
+    /** Determine effective type — detects staking (send to validator) */
+    effectiveType(item) {
+        if (item.type === 'send' && item.destination && this.isValidatorAddress(item.destination)) {
+            return 'stake';
+        }
+        return item.type;
+    },
+
     getTypeClass(type) {
         switch (type) {
             case 'send': return 'send';
@@ -1422,6 +1458,7 @@ const Explorer = {
             case 'change': return 'change';
             case 'bandwidth': return 'bandwidth';
             case 'pending': return 'receive';
+            case 'stake': return 'stake';
             default: return 'send';
         }
     },
@@ -1434,6 +1471,7 @@ const Explorer = {
             case 'change': return 'Change';
             case 'bandwidth': return 'Bandwidth';
             case 'pending': return 'Pending';
+            case 'stake': return 'Stake';
             default: return type || 'Unknown';
         }
     },

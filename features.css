@@ -740,6 +740,115 @@ body, .header, .search-section, .content-panel, .footer,
     color: var(--gold);
 }
 
+/* Tier Badge */
+.core-tier-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* Validator Name */
+.core-validator-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--orange);
+}
+
+/* Validator Address */
+.core-validator-address {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.core-validator-address:hover {
+    color: var(--orange);
+}
+
+/* Core Stat */
+.core-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.core-stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.core-stat-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Status dots */
+.status-active {
+    color: var(--green);
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+}
+
+.status-inactive {
+    color: var(--red);
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+}
+
+/* PoB Stats layout */
+.core-pob-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    width: 100%;
+}
+
+.core-pob-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.core-pob-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.core-pob-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.core-pob-tiers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.core-tier-chip {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
 /* Light theme overrides for Core */
 [data-theme="light"] .core-validator-card {
     background: #fff;
