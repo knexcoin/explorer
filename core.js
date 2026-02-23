@@ -48,24 +48,21 @@ const KnexCore = {
     // GEOGRAPHIC REGISTRY — address prefix → location
     // =============================================
     geoRegistry: {
-        // V2 — São Paulo (AWS sa-east-1)
-        '4v39kerTmdIvS6VyEZYr': { lat: -23.55, lon: -46.63, city: 'São Paulo' },
-        // V1 old key — Dallas, TX (HawkHost)
-        'DuKnng38xov6UthcBck5': { lat: 32.78, lon: -96.81, city: 'Dallas' },
-        // V3 — N. California (AWS us-west-1)
-        '0AmKBc0lcZPdBZt89jK4': { lat: 37.77, lon: -121.96, city: 'California' },
-        // V5 — Sydney (AWS ap-southeast-2)
-        'Iw1Ga3SP3PTrMnG6nSAI': { lat: -33.87, lon: 151.21, city: 'Sydney' },
-        // V4 — Mumbai (AWS ap-south-1)
-        '8szAtEjPJb69ki0OKcOa': { lat: 19.08, lon: 72.88, city: 'Mumbai' },
-        // V6 — Hong Kong (LeaseWeb HK)
-        'G3e0SdNWBYLO5wPAlu1j': { lat: 22.29, lon: 113.94, city: 'Hong Kong' },
-        // V1 new operative key — Dallas, TX
-        '4XE1cufZIHJBWnuBzBPM': { lat: 32.78, lon: -96.81, city: 'Dallas' },
-        // V3 operative key
-        '47icY5pYDda58SNbJk8p': { lat: 37.77, lon: -121.96, city: 'California' },
-        // V5 operative key
-        'HD7wyf3bRusGCLDzSljH': { lat: -33.87, lon: 151.21, city: 'Sydney' },
+        // V1 — Dallas, TX (HawkHost 198.252.104.24)
+        'DuKnng38xov6UthcBck5': { lat: 32.78, lon: -96.81, city: 'Dallas', vnum: 1 },
+        '4XE1cufZIHJBWnuBzBPM': { lat: 32.78, lon: -96.81, city: 'Dallas', vnum: 1 },
+        // V2 — São Paulo (AWS sa-east-1, 18.228.153.175)
+        '4v39kerTmdIvS6VyEZYr': { lat: -23.55, lon: -46.63, city: 'São Paulo', vnum: 2 },
+        // V3 — N. California (AWS us-west-1, 3.101.115.76)
+        '0AmKBc0lcZPdBZt89jK4': { lat: 37.77, lon: -121.96, city: 'California', vnum: 3 },
+        '47icY5pYDda58SNbJk8p': { lat: 37.77, lon: -121.96, city: 'California', vnum: 3 },
+        // V4 — Mumbai (AWS ap-south-1, 13.127.144.126)
+        '8szAtEjPJb69ki0OKcOa': { lat: 19.08, lon: 72.88, city: 'Mumbai', vnum: 4 },
+        // V5 — Sydney (AWS ap-southeast-2, 3.27.85.156)
+        'Iw1Ga3SP3PTrMnG6nSAI': { lat: -33.87, lon: 151.21, city: 'Sydney', vnum: 5 },
+        'HD7wyf3bRusGCLDzSljH': { lat: -33.87, lon: 151.21, city: 'Sydney', vnum: 5 },
+        // V6 — Hong Kong (LeaseWeb HK, 198.252.103.11)
+        'G3e0SdNWBYLO5wPAlu1j': { lat: 22.29, lon: 113.94, city: 'Hong Kong', vnum: 6 },
     },
 
     getGeo(address) {
@@ -439,7 +436,8 @@ const KnexCore = {
         ctx.font = `bold ${fontSize}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`V${i + 1}`, x, y);
+        const vnum = geo.vnum || (i + 1);
+        ctx.fillText(`V${vnum}`, x, y);
 
         // City + stake labels (front-facing only, when clear enough)
         if (isFront && depthFactor > 0.55) {
@@ -554,10 +552,11 @@ const KnexCore = {
             const rewardMult = v.reward_multiplier ? `${v.reward_multiplier}x` : '---';
             const geo = this.getGeo(v.address);
 
+            const vnum = geo.vnum || (i + 1);
             return `
                 <div class="core-validator-card" style="border-left: 3px solid ${tierColor}">
                     <div class="core-validator-header">
-                        <span class="core-validator-name">V${i + 1}</span>
+                        <span class="core-validator-name">V${vnum}</span>
                         <span class="core-tier-badge" style="background: ${tierColor}20; color: ${tierColor}; border: 1px solid ${tierColor}40">
                             Tier ${v.tier} ${tierName}
                         </span>
