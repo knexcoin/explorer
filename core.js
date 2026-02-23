@@ -614,7 +614,9 @@ const KnexCore = {
         // Build tier table rows
         const tierRows = (ci.tiers || []).map((t, i) => {
             const elig = ci.tier_eligibility?.[i] || {};
-            const quorumIcon = elig.has_quorum ? '&#x2705;' : '&#x274c;';
+            const quorumIcon = elig.has_quorum
+                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle"><circle cx="8" cy="8" r="7" stroke="#00c853" stroke-width="1.5" fill="#00c85320"/><path d="M4.5 8.2L7 10.5L11.5 5.5" stroke="#00c853" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle"><circle cx="8" cy="8" r="7" stroke="#ff3d3d" stroke-width="1.5" fill="#ff3d3d20"/><path d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5" stroke="#ff3d3d" stroke-width="1.5" stroke-linecap="round"/></svg>';
             const tierColor = this.config.tierColors[t.level] || '#bdbdbd';
             const stakeDisplay = t.required_stake_knex >= 1000
                 ? (t.required_stake_knex / 1000).toLocaleString('en-US') + 'K'
