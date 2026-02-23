@@ -58,8 +58,8 @@ const KnexCore = {
         'Iw1Ga3SP3PTrMnG6nSAI': { lat: -33.87, lon: 151.21, city: 'Sydney' },
         // V4 — Mumbai (AWS ap-south-1)
         '8szAtEjPJb69ki0OKcOa': { lat: 19.08, lon: 72.88, city: 'Mumbai' },
-        // V6 micro — New York
-        'G3e0SdNWBYLO5wPAlu1j': { lat: 40.71, lon: -74.01, city: 'New York' },
+        // V6 — Hong Kong (LeaseWeb HK)
+        'G3e0SdNWBYLO5wPAlu1j': { lat: 22.29, lon: 113.94, city: 'Hong Kong' },
         // V1 new operative key — Dallas, TX
         '4XE1cufZIHJBWnuBzBPM': { lat: 32.78, lon: -96.81, city: 'Dallas' },
         // V3 operative key
