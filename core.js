@@ -88,12 +88,12 @@ const KnexCore = {
     // 3D MATH UTILITIES
     // =============================================
     _latLonToXYZ(lat, lon) {
-        const phi = (90 - lat) * (Math.PI / 180);
-        const theta = (lon + 180) * (Math.PI / 180);
+        const latRad = lat * (Math.PI / 180);
+        const lonRad = lon * (Math.PI / 180);
         return {
-            x: Math.sin(phi) * Math.cos(theta),
-            y: Math.cos(phi),
-            z: Math.sin(phi) * Math.sin(theta),
+            x: Math.cos(latRad) * Math.sin(lonRad),  // east = +x
+            y: Math.sin(latRad),                       // north = +y
+            z: Math.cos(latRad) * Math.cos(lonRad),   // front = lon 0
         };
     },
 
