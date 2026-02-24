@@ -297,7 +297,7 @@ const KnexStats = {
     // =============================================
     async fetchNetworkStats() {
         try {
-            const res = await fetch(`${Explorer.config.apiUrl}/api/v1/network/stats`);
+            const res = await Explorer.fetchApi(`${Explorer.config.apiUrl}/api/v1/network/stats`);
             if (!res.ok) return;
             const data = await res.json();
 
@@ -364,7 +364,7 @@ const KnexStats = {
 
     async updateSecurityScore() {
         try {
-            const res = await fetch(`${Explorer.config.apiUrl}/api/v1/consensus/info`);
+            const res = await Explorer.fetchApi(`${Explorer.config.apiUrl}/api/v1/consensus/info`);
             if (!res.ok) return;
             const ci = await res.json();
 

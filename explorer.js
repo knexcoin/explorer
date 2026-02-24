@@ -11,6 +11,7 @@ const Explorer = {
     config: {
         apiUrl: 'https://api.knexcoins.com',
         wsUrl: 'wss://api.knexcoins.com/ws',
+        apiKey: 'ae07833d294d8f06f9f3bdc51ef136a2d4d3830fe1c9aabbb44219a12611a252',
         decimals: 7,
         symbol: 'KNEX',
         maxFeedItems: 200,
@@ -131,6 +132,16 @@ const Explorer = {
         for (const cb of cbs) {
             try { cb(data); } catch (e) { console.warn('[Event]', event, e); }
         }
+    },
+
+    // =============================================
+    // API HELPERS
+    // =============================================
+
+    /** Fetch with API key header (public tier) */
+    fetchApi(url, opts = {}) {
+        const headers = { 'X-Knex-Api-Key': this.config.apiKey, ...(opts.headers || {}) };
+        return fetch(url, { ...opts, headers });
     },
 
     // =============================================
@@ -487,7 +498,7 @@ const Explorer = {
         this.updateWsStatus('connecting');
 
         try {
-            this.state.ws = new WebSocket(this.config.wsUrl);
+            this.state.ws = new WebSocket(`${this.config.wsUrl}?key=${this.config.apiKey}`);
 
             this.state.ws.onopen = () => {
                 console.log('[WS] Connected');
@@ -829,9 +840,9 @@ const Explorer = {
 
         try {
             const [infoRes, historyRes, stakesRes] = await Promise.all([
-                fetch(`${this.config.apiUrl}/api/v1/account/${address}`),
-                fetch(`${this.config.apiUrl}/account/${address}/history`),
-                fetch(`${this.config.apiUrl}/api/v1/account/${address}/stakes`).catch(() => null),
+                this.fetchApi(`${this.config.apiUrl}/api/v1/account/${address}`),
+                this.fetchApi(`${this.config.apiUrl}/account/${address}/history`),
+                this.fetchApi(`${this.config.apiUrl}/api/v1/account/${address}/stakes`).catch(() => null),
             ]);
 
             let info = null;
@@ -1087,7 +1098,7 @@ const Explorer = {
         if (navEl) navEl.innerHTML = '';
 
         try {
-            const res = await fetch(`${this.config.apiUrl}/api/v1/block/${hash}`);
+            const res = await this.fetchApi(`${this.config.apiUrl}/api/v1/block/${hash}`);
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
@@ -1246,7 +1257,7 @@ const Explorer = {
         container.innerHTML = '<div class="feed-empty"><span class="spinner-inline"></span> Loading rich list...</div>';
 
         try {
-            const res = await fetch(`${this.config.apiUrl}/api/v1/richlist`);
+            const res = await this.fetchApi(`${this.config.apiUrl}/api/v1/richlist`);
             if (!res.ok) {
                 // Fallback: try to build from known accounts
                 container.innerHTML = '<div class="feed-empty"><p>Rich list endpoint not available yet.</p><p class="feed-empty-sub">This feature requires the /api/v1/richlist endpoint on the node.</p></div>';
@@ -1332,7 +1343,7 @@ const Explorer = {
         container.innerHTML = '<div class="feed-empty"><span class="spinner-inline"></span> Loading recent blocks...</div>';
 
         try {
-            const res = await fetch(`${this.config.apiUrl}/api/v1/blocks/recent`);
+            const res = await this.fetchApi(`${this.config.apiUrl}/api/v1/blocks/recent`);
             if (!res.ok) {
                 // Use feed items as fallback
                 if (this.state.feedItems.length > 0) {
@@ -1415,7 +1426,7 @@ const Explorer = {
     // =============================================
     async fetchNodeStats() {
         try {
-            const res = await fetch(`${this.config.apiUrl}/api/v1/node`);
+            const res = await this.fetchApi(`${this.config.apiUrl}/api/v1/node`);
             if (res.ok) {
                 const data = await res.json();
                 document.getElementById('blockCount').textContent =
@@ -1609,7 +1620,7 @@ const Explorer = {
     // =============================================
     async fetchValidatorAddresses() {
         try {
-            const resp = await fetch(`${this.config.apiUrl}/api/v1/validators`);
+            const resp = await this.fetchApi(`${this.config.apiUrl}/api/v1/validators`);
             if (!resp.ok) return;
             const data = await resp.json();
             this.state.validatorAddresses = new Set();

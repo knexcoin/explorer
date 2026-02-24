@@ -16,6 +16,7 @@
 const KnexCore = {
     config: {
         apiUrl: 'https://api.knexcoins.com',
+        apiKey: 'ae07833d294d8f06f9f3bdc51ef136a2d4d3830fe1c9aabbb44219a12611a252',
         refreshInterval: 30000,
         tierColors: {
             1: '#ffc107', // Mega — gold
@@ -149,6 +150,11 @@ const KnexCore = {
         });
     },
 
+    /** Fetch with API key header */
+    fetchApi(url) {
+        return fetch(url, { headers: { 'X-Knex-Api-Key': this.config.apiKey } });
+    },
+
     async load() {
         await Promise.all([
             this.fetchValidators(),
@@ -192,10 +198,30 @@ const KnexCore = {
     // =============================================
     async fetchValidators() {
         try {
-            const resp = await fetch(`${this.config.apiUrl}/api/v1/validators`);
-            if (!resp.ok) return;
-            const data = await resp.json();
+            const [valResp, healthResp] = await Promise.all([
+                this.fetchApi(`${this.config.apiUrl}/api/v1/validators`),
+                this.fetchApi(`${this.config.apiUrl}/api/v1/validators/health`).catch(() => null),
+            ]);
+            if (!valResp.ok) return;
+            const data = await valResp.json();
             this.state.validators = data.validators || [];
+
+            // Merge health data into validators
+            if (healthResp && healthResp.ok) {
+                const healthData = await healthResp.json();
+                const healthMap = {};
+                for (const h of (healthData.validators || [])) {
+                    healthMap[h.address] = h;
+                }
+                for (const v of this.state.validators) {
+                    const h = healthMap[v.address];
+                    if (h) {
+                        v._health_status = h.status;
+                        v._health_issues = h.issues || [];
+                    }
+                }
+            }
+
             if (typeof Explorer !== 'undefined') {
                 Explorer.state.validatorAddresses = new Set();
                 Explorer.state.validatorData = this.state.validators;
@@ -210,7 +236,7 @@ const KnexCore = {
 
     async fetchNetworkStats() {
         try {
-            const resp = await fetch(`${this.config.apiUrl}/api/v1/network/stats`);
+            const resp = await this.fetchApi(`${this.config.apiUrl}/api/v1/network/stats`);
             if (!resp.ok) return;
             this.state.networkStats = await resp.json();
         } catch (e) {
@@ -220,7 +246,7 @@ const KnexCore = {
 
     async fetchConsensusInfo() {
         try {
-            const resp = await fetch(`${this.config.apiUrl}/api/v1/consensus/info`);
+            const resp = await this.fetchApi(`${this.config.apiUrl}/api/v1/consensus/info`);
             if (!resp.ok) return;
             this.state.consensusInfo = await resp.json();
         } catch (e) {
@@ -473,14 +499,41 @@ const KnexCore = {
             ctx.fillText(`T${tier} ${tierName}`, x, y + visualRadius + 31);
         }
 
-        // Active pulse ring (front only)
-        if (v.is_active && isFront) {
-            const pulseR = visualRadius + 4 + Math.sin(this.rotation * 3 + i) * 3;
-            ctx.beginPath();
-            ctx.arc(x, y, pulseR, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(0,230,118,${(0.12 + Math.sin(this.rotation * 3 + i) * 0.08).toFixed(2)})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+        // Health-aware pulse ring (front only)
+        if (isFront) {
+            const hs = v._health_status || (v.is_active ? 'healthy' : 'inactive');
+            if (hs === 'healthy') {
+                // Green pulse — healthy
+                const pulseR = visualRadius + 4 + Math.sin(this.rotation * 3 + i) * 3;
+                ctx.beginPath();
+                ctx.arc(x, y, pulseR, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(0,230,118,${(0.12 + Math.sin(this.rotation * 3 + i) * 0.08).toFixed(2)})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            } else if (hs === 'syncing') {
+                // Amber pulse — syncing
+                const pulseR = visualRadius + 4 + Math.sin(this.rotation * 2.5 + i) * 3;
+                ctx.beginPath();
+                ctx.arc(x, y, pulseR, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255,193,7,${(0.15 + Math.sin(this.rotation * 2.5 + i) * 0.1).toFixed(2)})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            } else if (hs !== 'inactive') {
+                // Red pulse — offline, degraded, banned
+                const pulseR = visualRadius + 5 + Math.sin(this.rotation * 4 + i) * 4;
+                ctx.beginPath();
+                ctx.arc(x, y, pulseR, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255,23,68,${(0.2 + Math.sin(this.rotation * 4 + i) * 0.12).toFixed(2)})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // Inner red glow
+                const glowR = visualRadius + 2;
+                ctx.beginPath();
+                ctx.arc(x, y, glowR, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255,23,68,${(0.08 + Math.sin(this.rotation * 4 + i) * 0.06).toFixed(2)})`;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
         }
 
         ctx.restore();
@@ -561,9 +614,19 @@ const KnexCore = {
             const tierName = v.tier_name || this.config.tierNames[v.tier] || 'Unknown';
             const stakeKnex = this.formatKnex(v.stake);
             const shortAddr = v.address ? (v.address.slice(0, 8) + '...' + v.address.slice(-6)) : '---';
-            const statusDot = v.is_active ? 'status-active' : 'status-inactive';
             const rewardMult = v.reward_multiplier ? `${v.reward_multiplier}x` : '---';
             const geo = this.getGeo(v.address);
+
+            // Determine status dot class from health data
+            const hs = v._health_status || (v.is_active ? 'healthy' : 'inactive');
+            let statusDot;
+            if (hs === 'healthy') statusDot = 'status-active';
+            else if (hs === 'syncing') statusDot = 'status-syncing';
+            else if (hs === 'inactive') statusDot = 'status-inactive';
+            else statusDot = 'status-critical'; // offline, degraded, banned
+
+            const issues = v._health_issues || [];
+            const issuesHtml = issues.length ? `<div class="validator-health-issues">${issues.map(i => `<span class="health-issue">${i}</span>`).join('')}</div>` : '';
 
             const vnum = geo.vnum || (i + 1);
             return `
@@ -573,7 +636,7 @@ const KnexCore = {
                         <span class="core-tier-badge" style="background: ${tierColor}20; color: ${tierColor}; border: 1px solid ${tierColor}40">
                             Tier ${v.tier} ${tierName}
                         </span>
-                        <span class="core-status-dot ${statusDot}"></span>
+                        <span class="core-status-dot ${statusDot}" title="${hs}"></span>
                     </div>
                     <div class="core-validator-address" data-address="${v.address || ''}" title="${v.address || ''}">${shortAddr}</div>
                     <div class="core-validator-location" style="font-size:10px;color:#888;margin:2px 0 6px">${geo.city}</div>
@@ -591,6 +654,7 @@ const KnexCore = {
                             <span class="core-stat-value">${v.reputation}/100</span>
                         </div>
                     </div>
+                    ${issuesHtml}
                 </div>
             `;
         }).join('');

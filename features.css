@@ -799,9 +799,45 @@ body, .header, .search-section, .content-panel, .footer,
 }
 
 .status-inactive {
-    color: var(--red);
-    background: var(--red);
-    box-shadow: 0 0 8px var(--red);
+    color: #666;
+    background: #666;
+    box-shadow: 0 0 4px #666;
+}
+
+.status-critical {
+    background: #ff1744;
+    box-shadow: 0 0 8px #ff1744;
+    animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 4px #ff1744; opacity: 0.6; }
+    50% { box-shadow: 0 0 12px #ff1744, 0 0 24px rgba(255,23,68,0.4); opacity: 1; }
+}
+
+.status-syncing {
+    background: #ffc107;
+    box-shadow: 0 0 8px #ffc107;
+    animation: pulse-amber 2s ease-in-out infinite;
+}
+
+@keyframes pulse-amber {
+    0%, 100% { box-shadow: 0 0 4px #ffc107; opacity: 0.6; }
+    50% { box-shadow: 0 0 12px #ffc107; opacity: 1; }
+}
+
+.validator-health-issues {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.health-issue {
+    display: block;
+    font-size: 10px;
+    color: #ff5252;
+    padding: 2px 0;
+    line-height: 1.4;
 }
 
 /* PoB Stats layout */
