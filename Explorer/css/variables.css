@@ -1,0 +1,81 @@
+/* ================================================================
+   VARIABLES.CSS — Light mode DEFAULT, Dark mode override
+   Green theme (#00ff00) — SuperKnet Explorer
+   Glassmorphism: semi-transparent backgrounds with backdrop blur
+   ================================================================ */
+
+/* Light mode is the DEFAULT */
+:root {
+    --bg: transparent;
+    --bg-secondary: rgba(255,255,255,0.06);
+    --bg-card: rgba(255,255,255,0.05);
+    --bg-card-hover: rgba(255,255,255,0.1);
+    --bg-input: rgba(255,255,255,0.06);
+
+    --orange: #00ff00;
+    --gold: #33ff33;
+    --green: #00e676;
+    --red: #ff3b3b;
+    --cyan: #4dd0e1;
+    --purple: #bb86fc;
+    --blue: #448aff;
+
+    --text: #1a1a1a;
+    --text-dim: #555;
+    --text-muted: #888;
+
+    --border: rgba(0,255,0,0.2);
+    --border-strong: rgba(0,255,0,0.35);
+
+    --glow-orange: 0 0 8px rgba(0,255,0,0.2);
+    --glow-gold: 0 0 8px rgba(0,255,0,0.15);
+
+    --glass-blur: blur(2px);
+    --glass-blur-strong: blur(4px);
+
+    --font: 'JetBrains Mono', 'Courier New', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    --max-width: 1100px;
+
+    --transition-fast: 0.15s ease;
+    --transition-smooth: 0.25s ease;
+}
+
+/* Dark mode activates with data-theme="dark" */
+[data-theme="dark"] {
+    --bg: transparent;
+    --bg-secondary: rgba(0,0,0,0.1);
+    --bg-card: rgba(0,0,0,0.08);
+    --bg-card-hover: rgba(20,20,20,0.15);
+    --bg-input: rgba(0,0,0,0.1);
+
+    --text: #e8e8e8;
+    --text-dim: #777;
+    --text-muted: #555;
+
+    --border: rgba(0,255,0,0.15);
+    --border-strong: rgba(0,255,0,0.3);
+
+    --glow-orange: 0 0 8px rgba(0,255,0,0.3);
+    --glow-gold: 0 0 8px rgba(0,255,0,0.25);
+}
+
+/* Energy stream canvas — theme-aware background */
+#energyCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    background: #f5f5f5;
+}
+
+[data-theme="dark"] #energyCanvas {
+    background: #000;
+}

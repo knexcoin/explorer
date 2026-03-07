@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="512" height="512" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 6111.11 6111.11">
+ <defs>
+  <style type="text/css">
+    .bg {fill:#00ff00}
+    .logo {fill:#000000}
+  </style>
+ </defs>
+ <g id="Layer_x0020_1">
+  <g id="_2245679054560">
+   <rect class="bg" width="6111.11" height="6111.11"/>
+   <path class="logo" d="M1036.65 1364.85l917.64 0 2487.38 2481.86 2.74 -1767.63 -575.02 552.73 -530.46 -530.2 735.33 -736.76 1050.43 0c8.13,0 14.83,6.25 14.83,13.8l0 3285.34c0,7.56 -6.71,13.8 -14.83,13.8l-935.41 0 -2474.07 -2479.75 10.2 1759.65 567.83 -552.09 533.5 525.87 -738.54 747.87 -1051.57 0c-8.12,0 -14.83,-6.24 -14.83,-13.8l0 -3286.9c0,-7.57 6.7,-13.8 14.83,-13.8z"/>
+  </g>
+ </g>
+</svg>
