@@ -1,27 +1,72 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SuperKnet — KnexCoin Block Explorer</title>
     <meta name="description" content="SuperKnet — Real-time block explorer for KnexCoin. Search accounts, view transactions, and monitor the network.">
-    <meta name="theme-color" content="#000000">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF8C00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>">
+    <meta name="keywords" content="KnexCoin, block explorer, cryptocurrency, blockchain, transactions, SuperKnet">
+    <meta name="author" content="SuperKnet">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#f8f8f8">
+    <link rel="canonical" href="https://superknet.com">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://superknet.com">
+    <meta property="og:title" content="SuperKnet — KnexCoin Block Explorer">
+    <meta property="og:description" content="Real-time block explorer for KnexCoin. Search accounts, view transactions, and monitor the network.">
+    <meta property="og:image" content="https://superknet.com/images/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="SuperKnet">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://superknet.com">
+    <meta name="twitter:title" content="SuperKnet — KnexCoin Block Explorer">
+    <meta name="twitter:description" content="Real-time block explorer for KnexCoin. Search accounts, view transactions, and monitor the network.">
+    <meta name="twitter:image" content="https://superknet.com/images/og-image.png">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    <link rel="manifest" href="images/site.webmanifest">
+
+    <!-- Apple Web App -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SuperKnet">
+
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Oxygen:wght@700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="features.css">
+
+    <!-- Three.js (for energy stream background) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- QR codes -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/features.css">
 </head>
 <body>
+    <!-- Three.js Energy Stream Background -->
+    <canvas id="energyCanvas"></canvas>
+
     <!-- Header -->
     <header class="header">
         <div class="header-inner">
             <a href="/" class="logo" title="SuperKnet Home">
-                <img class="logo-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23000' width='100' height='100'/%3E%3Crect x='4' y='4' width='92' height='92' fill='none' stroke='%23FF8C00' stroke-width='3'/%3E%3Ctext x='50' y='50' font-size='28' text-anchor='middle' dominant-baseline='central' fill='%23FF8C00' font-family='Oxygen,Arial,sans-serif' font-weight='bold' letter-spacing='2'%3ESKY%3C/text%3E%3C/svg%3E" alt="SuperKnet">
+                <img class="logo-icon" src="images/favicon.svg" alt="SuperKnet">
                 <span class="logo-text">SUPERKNET</span>
-                <span class="network-badge">MAINNET</span>
+                <span class="network-badge testnet">TESTNET</span>
             </a>
             <div class="header-stats" id="headerStats">
                 <div class="stat-pill" id="statBlocks" title="Total blocks">
@@ -42,7 +87,15 @@
                 </div>
                 <button class="btn-icon header-tool-btn" id="themeToggle" title="Toggle theme">
                     <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
                     </svg>
                 </button>
                 <button class="btn-icon header-tool-btn" id="soundToggle" title="Toggle sound (off)">
@@ -162,9 +215,7 @@
                     Network Statistics
                 </h2>
             </div>
-            <div class="stats-grid" id="statsGrid">
-                <!-- Populated by charts.js -->
-            </div>
+            <div class="stats-grid" id="statsGrid"></div>
         </div>
 
         <!-- Rich List Panel -->
@@ -215,7 +266,6 @@
                     <button class="btn-small" id="refreshCore" title="Refresh">Refresh</button>
                 </div>
             </div>
-            <!-- Topology visualization -->
             <div class="core-topology-wrapper">
                 <canvas id="coreTopologyCanvas" width="800" height="400"></canvas>
                 <div class="core-consensus-badge" id="coreConsensusBadge">
@@ -223,13 +273,10 @@
                     <span class="core-consensus-value" id="coreConsensusStatus">--</span>
                 </div>
             </div>
-            <!-- Validator cards -->
             <div class="core-validators-grid" id="coreValidatorsGrid">
                 <div class="feed-empty"><span class="spinner-inline"></span> Loading validators...</div>
             </div>
-            <!-- PoB Status -->
             <div class="core-pob-bar" id="corePobBar"></div>
-            <!-- Consensus Nerd Stats -->
             <div class="core-nerd-stats" id="coreNerdStats">
                 <div class="core-nerd-header">
                     <h3 class="core-nerd-title">Consensus Nerd Stats</h3>
@@ -240,7 +287,7 @@
             </div>
         </div>
 
-        <!-- Account Detail View (hidden by default) -->
+        <!-- Account Detail View -->
         <div class="content-panel hidden" id="accountPanel">
             <div class="breadcrumb" id="accountBreadcrumb">
                 <button class="breadcrumb-item" data-action="home">Home</button>
@@ -281,9 +328,7 @@
                         <span class="account-stat-value account-stat-addr" id="accountRep">--</span>
                     </div>
                 </div>
-                <div class="account-enrichment" id="accountEnrichment">
-                    <!-- Populated by charts.js: sparkline, QR, labels, lifetime stats -->
-                </div>
+                <div class="account-enrichment" id="accountEnrichment"></div>
                 <div class="account-staking-section hidden" id="accountStaking">
                     <h3 class="panel-subtitle">Staking</h3>
                     <div class="staking-entries" id="stakingEntries"></div>
@@ -301,9 +346,7 @@
                 </div>
             </div>
             <div class="history-container" id="historyContainer">
-                <div class="feed-empty">
-                    <p>Loading history...</p>
-                </div>
+                <div class="feed-empty"><p>Loading history...</p></div>
             </div>
             <div class="pagination hidden" id="historyPagination">
                 <button class="btn-page" id="historyPrev" disabled>Previous</button>
@@ -312,7 +355,7 @@
             </div>
         </div>
 
-        <!-- Block Detail View (hidden by default) -->
+        <!-- Block Detail View -->
         <div class="content-panel hidden" id="blockPanel">
             <div class="breadcrumb" id="blockBreadcrumb">
                 <button class="breadcrumb-item" data-action="home">Home</button>
@@ -321,12 +364,8 @@
             </div>
             <div class="block-detail" id="blockDetail">
                 <h2 class="panel-title">Block Detail</h2>
-                <div class="block-fields" id="blockFields">
-                    <!-- Populated by JS -->
-                </div>
-                <div class="block-nav" id="blockNav">
-                    <!-- Previous/Next block navigation -->
-                </div>
+                <div class="block-fields" id="blockFields"></div>
+                <div class="block-nav" id="blockNav"></div>
             </div>
         </div>
     </main>
@@ -348,7 +387,7 @@
         <div class="footer-inner">
             <span>SuperKnet &mdash; KnexCoin Block Explorer</span>
             <span class="footer-links">
-                <a href="https://web3.knexpay.com" target="_blank" rel="noopener">KnexPay</a>
+                <a href="https://knexpay.com" target="_blank" rel="noopener">KnexPay</a>
                 <a href="https://faucet.knexcoins.com" target="_blank" rel="noopener">Faucet</a>
                 <a href="https://github.com/knexcoin" target="_blank" rel="noopener">GitHub</a>
             </span>
@@ -386,12 +425,13 @@
     </div>
 
     <!-- Application scripts -->
-    <script src="identicon.js"></script>
-    <script src="explorer.js"></script>
-    <script src="themes.js"></script>
-    <script src="audio.js"></script>
-    <script src="charts.js"></script>
-    <script src="flow.js"></script>
-    <script src="core.js"></script>
+    <script src="js/energy-stream.js"></script>
+    <script src="js/identicon.js"></script>
+    <script src="js/explorer.js"></script>
+    <script src="js/themes.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/flow.js"></script>
+    <script src="js/core.js"></script>
 </body>
 </html>
