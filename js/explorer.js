@@ -9,8 +9,8 @@
 const Explorer = {
     // Configuration
     config: {
-        apiUrl: window.location.origin,
-        wsUrl: (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws',
+        apiUrl: 'https://api.superknet.com',
+        wsUrl: 'wss://api.superknet.com/ws',
         apiKey: 'ae07833d294d8f06f9f3bdc51ef136a2d4d3830fe1c9aabbb44219a12611a252',
         decimals: 8,
         symbol: 'KNEX',
