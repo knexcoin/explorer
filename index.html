@@ -277,6 +277,17 @@
                 <div class="feed-empty"><span class="spinner-inline"></span> Loading validators...</div>
             </div>
             <div class="core-pob-bar" id="corePobBar"></div>
+
+            <!-- Burn & Tax Stats -->
+            <div class="core-burn-tax-row" style="display: flex; gap: 16px; margin-bottom: 16px;">
+                <div id="burnStatsPanel" class="core-stats-card" style="display: none; flex: 1; background: rgba(255,68,68,0.08); border: 1px solid rgba(255,68,68,0.2); border-radius: 12px; padding: 16px;">
+                    <h4 style="margin: 0 0 8px; color: #ff4444; font-size: 14px;">🔥 KNEX Burned</h4>
+                </div>
+                <div id="taxInfoPanel" class="core-stats-card" style="display: none; flex: 1; background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.2); border-radius: 12px; padding: 16px;">
+                    <h4 style="margin: 0 0 8px; color: #00e676; font-size: 14px;">💰 Transaction Tax</h4>
+                </div>
+            </div>
+
             <div class="core-nerd-stats" id="coreNerdStats">
                 <div class="core-nerd-header">
                     <h3 class="core-nerd-title">Consensus Nerd Stats</h3>
