@@ -1174,9 +1174,33 @@ const Explorer = {
         if (block.memo) {
             const decoded = this.decodeMemo(block.memo);
             if (decoded && decoded.typeName !== 'empty') {
-                const label = this._memoLabel(decoded.typeName);
-                const badge = `<span class="memo-type-badge memo-${decoded.typeName}">${label}</span>`;
-                const text = (decoded.displayText && decoded.typeName !== 'nfc_card') ? ` ${this.escapeHtml(decoded.displayText)}` : '';
+                let memoLabel, memoCss, memoText;
+                if (decoded.typeName === 'text') {
+                    const parsed = this._parseSendMethod(decoded.displayText);
+                    if (parsed.method === 'key') {
+                        memoLabel = this._memoLabel('legacy_key');
+                        memoCss = 'memo-legacy';
+                        memoText = parsed.userMemo;
+                    } else if (parsed.method === 'qr') {
+                        memoLabel = this._memoLabel('legacy_qr');
+                        memoCss = 'memo-legacy';
+                        memoText = parsed.userMemo;
+                    } else {
+                        memoLabel = this._memoLabel('text');
+                        memoCss = 'memo-text';
+                        memoText = decoded.displayText;
+                    }
+                } else if (decoded.typeName === 'nfc_card') {
+                    memoLabel = this._memoLabel('nfc_card');
+                    memoCss = 'memo-nfc_card';
+                    memoText = '';
+                } else {
+                    memoLabel = this._memoLabel(decoded.typeName);
+                    memoCss = `memo-${decoded.typeName}`;
+                    memoText = decoded.displayText || '';
+                }
+                const badge = `<span class="memo-type-badge ${memoCss}">${memoLabel}</span>`;
+                const text = memoText ? ` ${this.escapeHtml(memoText)}` : '';
                 fields.push({ label: 'Memo', value: badge + text });
             }
         }
@@ -1717,8 +1741,10 @@ const Explorer = {
 
     _memoLabel(typeName) {
         const labels = {
-            'nfc_card': 'NFC PAY',
+            'nfc_card': 'NFC CARD',
             'legacy': 'LEGACY',
+            'legacy_key': 'LEGACY KEY',
+            'legacy_qr': 'LEGACY QR',
             'text': 'TEXT',
             'json': 'JSON',
             'dex_order': 'DEX ORDER',
@@ -1731,12 +1757,52 @@ const Explorer = {
         return labels[typeName] || typeName.toUpperCase().replace('_', ' ');
     },
 
+    /**
+     * Parse send method from TEXT memo payload
+     * Returns { method: 'key'|'qr'|null, userMemo: string }
+     */
+    _parseSendMethod(displayText) {
+        if (!displayText) return { method: null, userMemo: '' };
+        if (displayText.startsWith('key_send:')) return { method: 'key', userMemo: displayText.slice(9) };
+        if (displayText === 'key_send') return { method: 'key', userMemo: '' };
+        if (displayText.startsWith('qr_send:')) return { method: 'qr', userMemo: displayText.slice(8) };
+        if (displayText === 'qr_send') return { method: 'qr', userMemo: '' };
+        return { method: null, userMemo: displayText };
+    },
+
     renderMemoBadge(memoHex) {
         const d = this.decodeMemo(memoHex);
         if (!d || d.typeName === 'empty') return '';
-        const label = this._memoLabel(d.typeName);
-        const text = (d.displayText && d.typeName !== 'nfc_card') ? `<span class="memo-payload">${this.escapeHtml(d.displayText)}</span>` : '';
-        return `<div class="feed-memo"><span class="memo-type-badge memo-${d.typeName}">${label}</span>${text}</div>`;
+
+        let label, cssClass, displayPayload;
+
+        if (d.typeName === 'text') {
+            const parsed = this._parseSendMethod(d.displayText);
+            if (parsed.method === 'key') {
+                label = this._memoLabel('legacy_key');
+                cssClass = 'memo-legacy';
+                displayPayload = parsed.userMemo;
+            } else if (parsed.method === 'qr') {
+                label = this._memoLabel('legacy_qr');
+                cssClass = 'memo-legacy';
+                displayPayload = parsed.userMemo;
+            } else {
+                label = this._memoLabel('text');
+                cssClass = 'memo-text';
+                displayPayload = d.displayText;
+            }
+        } else if (d.typeName === 'nfc_card') {
+            label = this._memoLabel('nfc_card');
+            cssClass = 'memo-nfc_card';
+            displayPayload = '';
+        } else {
+            label = this._memoLabel(d.typeName);
+            cssClass = `memo-${d.typeName}`;
+            displayPayload = d.displayText || '';
+        }
+
+        const text = displayPayload ? `<span class="memo-payload">${this.escapeHtml(displayPayload)}</span>` : '';
+        return `<div class="feed-memo"><span class="memo-type-badge ${cssClass}">${label}</span>${text}</div>`;
     },
 
     escapeHtml(str) {
