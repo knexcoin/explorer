@@ -1174,9 +1174,9 @@ const Explorer = {
         if (block.memo) {
             const decoded = this.decodeMemo(block.memo);
             if (decoded && decoded.typeName !== 'empty') {
-                const label = decoded.typeName.toUpperCase().replace('_', ' ');
+                const label = this._memoLabel(decoded.typeName);
                 const badge = `<span class="memo-type-badge memo-${decoded.typeName}">${label}</span>`;
-                const text = decoded.displayText ? ` ${this.escapeHtml(decoded.displayText)}` : '';
+                const text = (decoded.displayText && decoded.typeName !== 'nfc_card') ? ` ${this.escapeHtml(decoded.displayText)}` : '';
                 fields.push({ label: 'Memo', value: badge + text });
             }
         }
@@ -1715,11 +1715,27 @@ const Explorer = {
         return { type: typeCode, typeName, displayText, payloadSize: actualLen };
     },
 
+    _memoLabel(typeName) {
+        const labels = {
+            'nfc_card': 'NFC PAY',
+            'legacy': 'LEGACY',
+            'text': 'TEXT',
+            'json': 'JSON',
+            'dex_order': 'DEX ORDER',
+            'dex_settlement': 'DEX SETTLE',
+            'encrypted': 'ENCRYPTED',
+            'knexmail': 'KNEXMAIL',
+            'recurring': 'RECURRING',
+            'multisig': 'MULTISIG',
+        };
+        return labels[typeName] || typeName.toUpperCase().replace('_', ' ');
+    },
+
     renderMemoBadge(memoHex) {
         const d = this.decodeMemo(memoHex);
         if (!d || d.typeName === 'empty') return '';
-        const label = d.typeName.toUpperCase().replace('_', ' ');
-        const text = d.displayText ? `<span class="memo-payload">${this.escapeHtml(d.displayText)}</span>` : '';
+        const label = this._memoLabel(d.typeName);
+        const text = (d.displayText && d.typeName !== 'nfc_card') ? `<span class="memo-payload">${this.escapeHtml(d.displayText)}</span>` : '';
         return `<div class="feed-memo"><span class="memo-type-badge memo-${d.typeName}">${label}</span>${text}</div>`;
     },
 
