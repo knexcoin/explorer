@@ -1187,7 +1187,7 @@ const Explorer = {
                         memoText = parsed.userMemo;
                     } else {
                         memoLabel = this._memoLabel('text');
-                        memoCss = 'memo-text';
+                        memoCss = 'memo-legacy';
                         memoText = decoded.displayText;
                     }
                 } else if (decoded.typeName === 'nfc_card') {
@@ -1745,7 +1745,7 @@ const Explorer = {
             'legacy': 'LEGACY',
             'legacy_key': 'LEGACY KEY',
             'legacy_qr': 'LEGACY QR',
-            'text': 'TEXT',
+            'text': 'LEGACY',
             'json': 'JSON',
             'dex_order': 'DEX ORDER',
             'dex_settlement': 'DEX SETTLE',
@@ -1788,7 +1788,7 @@ const Explorer = {
                 displayPayload = parsed.userMemo;
             } else {
                 label = this._memoLabel('text');
-                cssClass = 'memo-text';
+                cssClass = 'memo-legacy';
                 displayPayload = d.displayText;
             }
         } else if (d.typeName === 'nfc_card') {
